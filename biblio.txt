@@ -1,0 +1,7 @@
+https://github.com/Christopher-Thornton/hmni
+https://www.ipachart.com/
+https://pypi.org/project/fuzzywuzzy/
+https://github.com/dmort27/panphon
+https://github.com/rhasspy/gruut-ipa
+https://github.com/xinjli/allosaurus
+https://pypi.org/project/panphon/

@@ -1,0 +1,10 @@
+Learn embedding on levenstein or other metric based on two chosen words etc. (siamese)
+
+Preprocessing: simplify the phonemes to keep only the letter?
+
+Convert to wav then embedd wav instead. https://github.com/rhasspy/gruut-ipa -> https://github.com/cristoper/wav2vec
+
+https://linguistics.stackexchange.com/questions/43492/finding-phonetic-similarity-of-names-in-different-languages
+
+Version simple de distance: utiliser dogol prime distance directement sur les phonemes.
+Version plus compliquée, utiliser la vectorisation de panphon et faire un genre de DTW, de sliding window pour trouver le bout le plus ressemblant.

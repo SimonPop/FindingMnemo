@@ -6,6 +6,8 @@ import yaml
 from tqdm import tqdm
 import panphon.distance
 import numpy as np
+from random import sample
+import os
 
 class SoundDataset(Dataset):
     def __init__(self, size: int = 10):
@@ -19,6 +21,9 @@ class SoundDataset(Dataset):
         self.pair_dict = self.find_best_pairs(english_ipas, chinese_ipas)
         self.english_ipas = english_ipas
         self.chinese_ipas = chinese_ipas
+
+    def __len__(self):
+        return 2*self.size
 
     def find_best_pairs(self, english_vocabulary: List[str], chinese_vocabulary: List[str]):
         
@@ -36,7 +41,8 @@ class SoundDataset(Dataset):
         }
 
     def load_chinese_words(self) -> List[str]:
-        path = './chinese_vocab_list.yaml'
+        script_dir = os.path.dirname(__file__)
+        path = os.path.join(script_dir, './chinese_vocab_list.yaml')
         chinese_ipas = []
         with open(path, "r", encoding='utf-8') as stream:
             chinese_vocabulary = yaml.safe_load(stream)
@@ -49,18 +55,25 @@ class SoundDataset(Dataset):
             return chinese_ipas
 
     def load_english_words(self) -> List[str]:
-        from nltk.corpus import words
+        script_dir = os.path.dirname(__file__)
+        path = os.path.join(script_dir, './common_english_words.txt')
+        with open(path, "r") as stream:
+            english_words = stream.readlines()
         # Select words of more than 5 letters
-        english_words = words.words()
         english_words = [w for w in english_words if len(w) > 5]
-        return [ipa.convert(w) for w in english_words[:10]]
+        return [ipa.convert(w) for w in sample(english_words, self.size)]
 
     def __getitem__(self, index: int):
         if index % 2 == 0:
-            chinese_match, english_match, distance = self.get_positive_pair(index//2)
+            english_match, chinese_match, distance = self.get_positive_pair(index//2)
         else:
-            chinese_match, english_match, distance = self.get_negative_pair(index//2)
-        return chinese_match, english_match, distance
+            english_match, chinese_match, distance = self.get_negative_pair(index//2)
+        return {
+            'chinese_match': chinese_match, 
+            'english_match': english_match, 
+            'distance': distance,
+            'negative': index % 2 != 0
+            }
 
     def get_positive_pair(self, index: int):
         return self.pair_dict['positive'][index]

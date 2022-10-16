@@ -61,7 +61,7 @@ class SoundDataset(Dataset):
             english_words = stream.readlines()
         # Select words of more than 5 letters
         english_words = [w for w in english_words if len(w) > 5]
-        return [ipa.convert(w) for w in sample(english_words, self.size)]
+        return [ipa.convert(w) for w in english_words]
 
     def __getitem__(self, index: int):
         if index % 2 == 0:

@@ -4,10 +4,10 @@ from pathlib import Path
 
 
 class PhoneticPairDataset(Dataset):
-    def __init__(self):
+    def __init__(self, best_pairs_path: str, worst_pairs_path: str):
         self.path = Path(__file__).parent
-        self.best_pairs = pd.read_csv(self.path / "../../data/best_pairs.csv")
-        self.worst_pairs = pd.read_csv(self.path / "../../data/worst_pairs.csv")
+        self.best_pairs = pd.read_csv(best_pairs_path)
+        self.worst_pairs = pd.read_csv(worst_pairs_path)
 
     def __getitem__(self, index):
         is_negative = index % 2

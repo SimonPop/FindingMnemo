@@ -2,22 +2,27 @@ from torch.utils.data import Dataset
 import pandas as pd
 from pathlib import Path
 
+
 class PhoneticPairDataset(Dataset):
     def __init__(self):
         self.path = Path(__file__).parent
-        self.best_pairs = pd.read_csv(self.path / '../../data/best_pairs.csv')
-        self.worst_pairs = pd.read_csv(self.path / '../../data/worst_pairs.csv')
+        self.best_pairs = pd.read_csv(self.path / "../../data/best_pairs.csv")
+        self.worst_pairs = pd.read_csv(self.path / "../../data/worst_pairs.csv")
 
     def __getitem__(self, index):
-        best_pair = self.best_pairs.iloc[index]
-        worst_pair = self.worst_pairs.iloc[index]
+        is_negative = index % 2
+        if is_negative == 0:
+            pair = self.best_pairs.iloc[index // 2]
+        else:
+            pair = self.worst_pairs.iloc[index // 2]
         return {
-            'chinese_phonetic': best_pair['chinese_ipa'],
-            'best_english_phonetic': best_pair['english_ipa'],
-            'worst_english_phonetic': worst_pair['english_ipa'],
-            'best_distance': best_pair['distance'],
-            'worst_distance': worst_pair['distance']
+            "chinese_phonetic": pair["chinese_ipa"],
+            "english_phonetic": pair["english_ipa"],
+            "distance": is_negative,
         }
+
+    def __len__(self):
+        return len(self.best_pairs) + len(self.worst_pairs)
 
     def filter_data(self):
         # Keep only the best data (threhsold on best_pairs?)

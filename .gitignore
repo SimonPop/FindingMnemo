@@ -1,5 +1,10 @@
+# --- data ---
 **.csv
 **.json
 **.txt
 **__pycache__
 data/
+
+# --- logs ---
+**mlruns
+**lightning_logs/

@@ -1,3 +1,5 @@
 markovify
 networkx
 gensim
+dvc
+mlflow

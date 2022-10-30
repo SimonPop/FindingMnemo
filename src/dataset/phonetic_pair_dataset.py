@@ -6,8 +6,12 @@ from pathlib import Path
 class PhoneticPairDataset(Dataset):
     def __init__(self, best_pairs_path: str, worst_pairs_path: str):
         self.path = Path(__file__).parent
-        self.best_pairs = pd.read_csv(best_pairs_path)
-        self.worst_pairs = pd.read_csv(worst_pairs_path)
+        self.best_pairs = pd.read_csv(best_pairs_path).dropna(
+            subset=["chinese_ipa", "english_ipa"]
+        )
+        self.worst_pairs = pd.read_csv(worst_pairs_path).dropna(
+            subset=["chinese_ipa", "english_ipa"]
+        )
 
     def __getitem__(self, index):
         is_negative = index % 2
@@ -18,7 +22,8 @@ class PhoneticPairDataset(Dataset):
         return {
             "chinese_phonetic": pair["chinese_ipa"],
             "english_phonetic": pair["english_ipa"],
-            "distance": is_negative,
+            "distance": pair["distance"],
+            "is_negative": is_negative,
         }
 
     def __len__(self):

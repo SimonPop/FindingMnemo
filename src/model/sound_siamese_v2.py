@@ -40,9 +40,9 @@ class SoundSiamese(pl.LightningModule):
         return self.cos(a, b)
 
     def encode(self, x: List[str]) -> List[torch.tensor]:
-        x = [torch.tensor([self.vocabulary[l] for l in w]) for w in x]
+        x = [torch.tensor([self.vocabulary[l] for l in w if l in self.vocabulary]) for w in x]
         x = [self.pad(t) for t in x]
-        x = torch.stack(x)
+        x = torch.stack(x).long()
         x = self.embedding(x)
         x = self.p_enc_1d_model_sum(x)
         x = self.encoder(x)

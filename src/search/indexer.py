@@ -11,7 +11,7 @@ class Indexer(Executor):
     def index(self) -> DocumentArray:
         model = self.load_model()
         da = self.load_documents()
-        self.embed(da)
+        # self.embed(da)
         return da
 
     def load_model(self) -> SoundSiamese:
@@ -21,8 +21,10 @@ class Indexer(Executor):
         return model
 
     def load_documents(self) -> DocumentArray:
-        dataframe = pd.read_csv(Path(__file__).parent.parent / 'pairing' / 'english.csv')
-        words = dataframe['word']
+        # TODO: Use batches to encode faster.
+        dataframe = pd.read_csv(Path(__file__).parent.parent / 'dataset' / 'pairing' / 'english.csv')
+        words = dataframe['word'].astype(str)
+        # embedding = self.model.encode(words)
         with DocumentArray(
             storage='redis',
             config={
@@ -30,8 +32,11 @@ class Indexer(Executor):
                 'index_name': 'idx',
             },
         ) as da:
-            da.extend([Document(text=w) for w in words])
+            da.extend([Document(text=w, embedding=self.model.encode(w)) for w in words])
         return da
 
     def embed(self, da: DocumentArray):
         da.embed(self.model.encode)
+
+
+i = Indexer().index()

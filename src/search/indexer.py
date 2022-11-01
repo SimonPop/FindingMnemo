@@ -11,7 +11,6 @@ class Indexer(Executor):
     def index(self) -> DocumentArray:
         model = self.load_model()
         da = self.load_documents()
-        # self.embed(da)
         return da
 
     def load_model(self) -> SoundSiamese:
@@ -22,21 +21,27 @@ class Indexer(Executor):
 
     def load_documents(self) -> DocumentArray:
         # TODO: Use batches to encode faster.
+        # TODO: phoneme + text
         dataframe = pd.read_csv(Path(__file__).parent.parent / 'dataset' / 'pairing' / 'english.csv')
-        words = dataframe['word'].astype(str)
+        words = dataframe[['word', 'ipa']].astype(str).head(50)   
         # embedding = self.model.encode(words)
         with DocumentArray(
             storage='redis',
             config={
-                'n_dim': 128,
-                'index_name': 'idx',
+                'n_dim': self.model.embedding_dim,
+                'index_name': 'english_words',
+                'distance': 'COSINE'
             },
         ) as da:
-            da.extend([Document(text=w, embedding=self.model.encode(w)) for w in words])
+            da.extend([Document(text=w['word'], embedding=self.model.encode([w['ipa']]).detach()[0]) for _, w in words.iterrows()])
         return da
 
     def embed(self, da: DocumentArray):
         da.embed(self.model.encode)
 
 
-i = Indexer().index()
+indexer = Indexer()
+da = indexer.index()
+
+np_query = indexer.model.encode(["bɔ́təl"]).detach().numpy()[0]
+print(da.find(np_query, limit=5)[:, 'text'])

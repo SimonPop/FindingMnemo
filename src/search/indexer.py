@@ -17,6 +17,7 @@ class Indexer(Executor):
         model = SoundSiamese()
         model.load_state_dict(torch.load(Path(__file__).parent.parent / "model" / "model_dict"))
         self.model = model
+        model.eval()
         return model
 
     def load_documents(self) -> DocumentArray:
@@ -43,5 +44,7 @@ class Indexer(Executor):
 indexer = Indexer()
 da = indexer.index()
 
-np_query = indexer.model.encode(["bɔ́təl"]).detach().numpy()[0]
-print(da.find(np_query, limit=5)[:, 'text'])
+with torch.inference_mode():
+    np_query = indexer.model.encode(["bɔ́təl"]).detach().numpy()[0]
+    # da.match(np_query, metric='euclidean', limit=3)
+    print(da.find(np_query, limit=5)[:, 'text'])

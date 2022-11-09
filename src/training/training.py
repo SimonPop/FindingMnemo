@@ -1,12 +1,15 @@
 from src.dataset.phonetic_pair_dataset_v2 import PhoneticPairDataset
 from src.model.sound_siamese_v2 import SoundSiamese
+
 from pytorch_lightning.loggers import MLFlowLogger
 from pytorch_lightning.utilities.seed import seed_everything
-import optuna
-import torch
 from torch.utils.data import DataLoader
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+
+import mlflow
+import torch
+import optuna
 
 seed_everything(0)
 
@@ -42,8 +45,15 @@ def objective(trial):
         instance["validation_dataloader"],
         trainer,
     )
-    return test_model(model, instance["test_dataloader"], trainer)[0]["test_loss"]
 
+    test_loss = test_model(model, instance["test_dataloader"], trainer)[0]["test_loss"]
+
+    with mlflow.start_run():
+        mlflow.pytorch.log_model(model)
+        mlflow.log_params(trial.params)
+        mlflow.log_metric("final_test_loss", test_loss)
+
+    return test_loss
 
 def instanciate(kwargs):
     train_dataloader = DataLoader(

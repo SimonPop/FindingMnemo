@@ -21,11 +21,16 @@ class Indexer(Executor):
         return model
 
     def load_documents(self) -> DocumentArray:
-        # TODO: Use batches to encode faster.
-        # TODO: phoneme + text
         dataframe = pd.read_csv(Path(__file__).parent.parent / 'dataset' / 'pairing' / 'english.csv')
         words = dataframe[['word', 'ipa']].astype(str).head(50)   
-        # embedding = self.model.encode(words)
+
+        local_da = DocumentArray([Document(text=w['word'], ipa=w['ipa']) for _, w in words.iterrows()])
+        def embed(da: DocumentArray) -> DocumentArray:
+                x = da[:,'tags__ipa']
+                da.embeddings = self.model.encode(x).detach()
+                return da
+        local_da.apply_batch(embed, batch_size=32)
+
         with DocumentArray(
             storage='redis',
             config={
@@ -34,7 +39,7 @@ class Indexer(Executor):
                 'distance': 'COSINE'
             },
         ) as da:
-            da.extend([Document(text=w['word'], embedding=self.model.encode([w['ipa']]).detach()[0]) for _, w in words.iterrows()])
+            da += local_da
         return da
 
     def embed(self, da: DocumentArray):
@@ -46,5 +51,5 @@ da = indexer.index()
 
 with torch.inference_mode():
     np_query = indexer.model.encode(["bɔ́təl"]).detach().numpy()[0]
-    # da.match(np_query, metric='euclidean', limit=3)
+    # da.match(np_query, metric='cosine', limit=3)
     print(da.find(np_query, limit=5)[:, 'text'])

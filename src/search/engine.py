@@ -15,7 +15,7 @@ class Engine(Executor):
         self.model = self.load_model()
         self.da = self.documents()
 
-    @requests(on=['/search'])
+    @requests(on=['/search', '/generate'])
     def search(self, docs: DocumentArray, **kwargs) -> Union[DocumentArray, Dict, None]:
         x = docs[:,'tags__ipa']
         np_query = self.model.encode(x).detach().numpy()[0]

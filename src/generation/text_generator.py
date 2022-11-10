@@ -1,8 +1,10 @@
 from keytotext import pipeline
 from typing import List
+from jina import Executor, requests, DocumentArray
 
-class TextGenerator():
-    def __init__(self):
+class TextGenerator(Executor):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.config = {
             "max_length": 1024,
             "num_beams": 20,
@@ -12,5 +14,16 @@ class TextGenerator():
         }
         self.model = pipeline('k2t-base')
 
-    def generate(self, keywords: List[str]):
-        return self.model(keywords, **self.config)
+    @requests(on=['/generate'])
+    def generate(self, docs: DocumentArray, **kwargs):
+        keywords = docs[:,'text']
+        print('>>', self.model(keywords, **self.config))
+        return None
+
+
+from jina import Flow, Document
+
+if __name__ == '__main__':
+    f = Flow().add(name='TextGenerator', uses=TextGenerator)
+    with f:
+        f.post(on='/generate', inputs=DocumentArray([Document(text='football'), Document(text='Zidane')]), on_done=print)

@@ -1,2 +1,2 @@
-class Indexer():
+class Indexer:
     pass

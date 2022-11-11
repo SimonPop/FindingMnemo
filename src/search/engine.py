@@ -18,8 +18,18 @@ class Engine(Executor):
     @requests(on=['/search', '/generate'])
     def search(self, docs: DocumentArray, **kwargs) -> Union[DocumentArray, Dict, None]:
         x = docs[:,'tags__ipa']
-        np_query = self.model.encode(x).detach().numpy()[0]
-        return self.da.find(np_query, limit=self.n_limit)
+        docs.embeddings = self.model.encode(x).detach()
+
+        # TODO: replace by self.da alone when DB is fixed.
+        # ---
+        self.da = DocumentArray([Document(text='hotel_a', ipa='bɔ́təl'), Document(text='hotel_b', ipa='bɔ́təl')])
+        x = self.da[:,'tags__ipa']
+        self.da.embeddings = self.model.encode(x).detach()
+        # ---
+
+        docs.match(self.da, limit=self.n_limit)
+
+        return docs
 
     def load_model(self) -> SoundSiamese:
         model = SoundSiamese()
@@ -38,14 +48,7 @@ class Engine(Executor):
         )
 
 
-# f = Flow().add(uses=Engine)
-
-# with f:
-#     f.post(on='/search', inputs=DocumentArray(Document(text='hotel', ipa='bɔ́təl')))
-
-
-# m = Engine()
-# da = DocumentArray([Document(text='hotel', ipa='bɔ́təl')])
-# res = m.search(da)
-# print(res[:,'text'])
-# print(res.summary())
+if __name__ == '__main__':
+    f = Flow().add(name='Engine', uses=Engine)
+    with f:
+        f.post(on='/generate', inputs=DocumentArray(Document(text='hotel', ipa='bɔ́təl')), on_done=print)

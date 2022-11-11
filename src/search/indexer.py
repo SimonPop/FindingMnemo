@@ -1,4 +1,4 @@
-from jina import Document, DocumentArray, Executor
+from jina import Document, DocumentArray, Executor, requests, Flow
 from pathlib import Path
 import pandas as pd 
 import torch
@@ -8,7 +8,8 @@ from src.model.sound_siamese_v2 import SoundSiamese
 class Indexer(Executor):
     model: SoundSiamese
 
-    def index(self) -> DocumentArray:
+    @requests(on=["/index"])
+    def index(self, **kwargs) -> DocumentArray:
         model = self.load_model()
         da = self.load_documents()
         return da
@@ -46,10 +47,16 @@ class Indexer(Executor):
         da.embed(self.model.encode)
 
 
-indexer = Indexer()
-da = indexer.index()
+if __name__ == "__main__":
+    f = Flow().add(name='Indexer', uses=Indexer)
+    with f:
+        f.post(on='/index', inputs=None, on_done=print)
 
-with torch.inference_mode():
-    np_query = indexer.model.encode(["bɔ́təl"]).detach().numpy()[0]
-    # da.match(np_query, metric='cosine', limit=3)
-    print(da.find(np_query, limit=5)[:, 'text'])
+
+# indexer = Indexer()
+# da = indexer.index()
+
+# with torch.inference_mode():
+#     np_query = indexer.model.encode(["bɔ́təl"]).detach().numpy()[0]
+#     # da.match(np_query, metric='cosine', limit=3)
+#     print(da.find(np_query, limit=5)[:, 'text'])

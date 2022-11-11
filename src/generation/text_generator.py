@@ -17,7 +17,9 @@ class TextGenerator(Executor):
     @requests(on=['/generate'])
     def generate(self, docs: DocumentArray, **kwargs):
         keywords = docs[:,'text']
-        print('>>', self.model(keywords, **self.config))
+        print('>>', docs[:,'text'])
+        print('>>>', docs['@m','text'])
+        #TODO: Use matches as well.
         return None
 
 

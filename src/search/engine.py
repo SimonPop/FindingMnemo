@@ -19,32 +19,26 @@ class Engine(Executor):
     def search(self, docs: DocumentArray, **kwargs) -> Union[DocumentArray, Dict, None]:
         x = docs[:,'tags__ipa']
         docs.embeddings = self.model.encode(x).detach()
-
-        # TODO: replace by self.da alone when DB is fixed.
-        # ---
-        # self.da = DocumentArray([Document(text='hotel_a', ipa='bɔ́təl'), Document(text='hotel_b', ipa='bɔ́təl')])
-        # x = self.da[:,'tags__ipa']
-        # self.da.embeddings = self.model.encode(x).detach()
-        # ---
-
         docs.match(self.da, metric='cosine', limit=self.n_limit)
         return docs
 
     def load_model(self) -> SoundSiamese:
         model = SoundSiamese()
         model.load_state_dict(torch.load(Path(__file__).parent.parent / "model" / "model_dict"))
+        model.eval()
         self.model = model
         return model
 
     def documents(self) -> DocumentArray:
-        return DocumentArray(
+        da = DocumentArray(
             storage='redis',
             config={
                 'n_dim': self.model.embedding_dim,
                 'index_name': 'english_words',
                 'distance': 'COSINE'
-            },
+            }
         )
+        return DocumentArray(da, copy=True)
 
 
 if __name__ == '__main__':

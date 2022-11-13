@@ -16,16 +16,21 @@ class TextGenerator(Executor):
 
     @requests(on=['/generate'])
     def generate(self, docs: DocumentArray, **kwargs):
-        keywords = docs[:,'text']
-        print('>>', docs[:,'text'])
-        print('>>>', docs['@m','text'])
-        #TODO: Use matches as well.
-        return None
+        for query in docs:
+            mnemo = [self.model([query.text, keyword], **self.config) for keyword in query.matches[:,'text']]
+            query.tags['mnemo'] = mnemo
+        return docs
 
 
 from jina import Flow, Document
 
 if __name__ == '__main__':
+
+    inputs = DocumentArray([Document(text='football', matches=[Document(text='Zidane')]), Document(text='bakery', matches=[Document(text='bread')])])
+
     f = Flow().add(name='TextGenerator', uses=TextGenerator)
     with f:
-        f.post(on='/generate', inputs=DocumentArray([Document(text='football'), Document(text='Zidane')]), on_done=print)
+        f.post(on='/generate', inputs=inputs, on_done=print)
+
+    # text_generator = TextGenerator()
+    # text_generator.generate(inputs)

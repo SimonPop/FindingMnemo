@@ -9,3 +9,10 @@ if __name__ == "__main__":
 
     with f:
         f.post(on='/generate', inputs=DocumentArray(Document(text='hotel', ipa='bɔ́təl')), on_done=print)
+
+    # inputs = DocumentArray([Document(text='hotel', ipa='bɔ́təl')])
+    # x = engine = Engine().search(inputs)
+    # x = TextGenerator().generate(x)
+    # print(x[:,'tags__mnemo'])
+    # print(x[:,'text'])
+    # print(x['@m','text'])

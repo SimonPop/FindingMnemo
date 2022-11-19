@@ -35,7 +35,9 @@ class Engine(Executor):
             config={
                 'n_dim': self.model.embedding_dim,
                 'index_name': 'english_words',
-                'distance': 'COSINE'
+                'distance': 'COSINE',
+                'host': 'redis',
+                'port': '6379',
             }
         )
         return DocumentArray(da, copy=True)

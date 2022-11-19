@@ -4,3 +4,11 @@ services:
     image: redislabs/redisearch:2.6.0
     ports:
       - "6379:6379"
+  fastapi: 
+    build: . 
+    command: uvicorn app.main:app --host 0.0.0.0
+    ports:     
+      - "8000:8000"
+networks:
+  counter-net:
+    driver: bridge

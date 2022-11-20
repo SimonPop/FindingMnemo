@@ -29,6 +29,9 @@ class Engine(Executor):
         self.model = model
         return model
 
+    def load_documents(self) -> None:
+        self.da = self.documents()
+
     def documents(self) -> DocumentArray:
         da = DocumentArray(
             storage='redis',

@@ -10,3 +10,4 @@ pandas==1.5.0
 positional-encodings==6.0.1
 pytorch-lightning==1.6.4
 redis==4.3.4
+dragonmapper==0.2.6

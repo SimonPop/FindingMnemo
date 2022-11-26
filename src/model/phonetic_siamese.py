@@ -7,7 +7,7 @@ from typing import List
 from positional_encodings.torch_encodings import PositionalEncoding1D, Summer
 
 
-class SoundSiamese(pl.LightningModule):
+class PhoneticSiamese(pl.LightningModule):
     def __init__(
         self,
         embedding_dim: int = 16,

@@ -1,4 +1,4 @@
-from src.model.sound_siamese_v2 import SoundSiamese
+from model.phonetic_siamese import PhoneticSiamese
 
 from jina import requests, DocumentArray, Document, Executor, Flow
 from typing import Dict, Union
@@ -7,7 +7,7 @@ import torch
 
 class Engine(Executor):
     n_limit: int = 5
-    model: SoundSiamese
+    model: PhoneticSiamese
     da: DocumentArray
 
     def __init__(self, **kwargs):
@@ -22,8 +22,8 @@ class Engine(Executor):
         docs.match(self.da, metric='cosine', limit=self.n_limit)
         return docs
 
-    def load_model(self) -> SoundSiamese:
-        model = SoundSiamese()
+    def load_model(self) -> PhoneticSiamese:
+        model = PhoneticSiamese()
         model.load_state_dict(torch.load(Path(__file__).parent.parent / "model" / "model_dict"))
         model.eval()
         self.model = model

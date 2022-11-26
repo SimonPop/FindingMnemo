@@ -6,9 +6,11 @@ from src.search.indexer import Indexer
 
 if __name__ == "__main__":
     f = Flow().add(name='Indexer', uses=Indexer).add(name='Engine', uses=Engine, needs=[]).add(name='TextGenerator', uses=TextGenerator, needs=['Engine'])
-
-    with f:
-        f.post(on='/generate', inputs=DocumentArray(Document(text='hotel', ipa='bɔ́təl')), on_done=print)
+    
+    f.to_docker_compose_yaml('flow-docker-compose.yml')
+    
+    # with f:
+    #     f.post(on='/generate', inputs=DocumentArray(Document(text='hotel', ipa='bɔ́təl')), on_done=print)
 
     # inputs = DocumentArray([Document(text='hotel', ipa='bɔ́təl')])
     # x = engine = Engine().search(inputs)

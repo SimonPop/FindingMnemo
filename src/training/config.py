@@ -6,6 +6,7 @@ class TrainingConfig(BaseModel):
     experiment_name: str
     max_epochs: int = 100
     n_trials: int = 100
+    seed: int = 0
     best_pairs_dataset: str = "best_pairs.csv"
     worst_pairs_dataset: str = "worst_pairs.csv"
 

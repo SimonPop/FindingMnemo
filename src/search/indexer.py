@@ -3,10 +3,10 @@ from pathlib import Path
 import pandas as pd 
 import torch
 
-from src.model.sound_siamese_v2 import SoundSiamese
+from model.phonetic_siamese import PhoneticSiamese
 
 class Indexer(Executor):
-    model: SoundSiamese
+    model: PhoneticSiamese
 
     @requests(on=["/index"])
     def index(self, **kwargs) -> DocumentArray:
@@ -14,8 +14,8 @@ class Indexer(Executor):
         da = self.load_documents()
         return da
 
-    def load_model(self) -> SoundSiamese:
-        model = SoundSiamese()
+    def load_model(self) -> PhoneticSiamese:
+        model = PhoneticSiamese()
         model.load_state_dict(torch.load(Path(__file__).parent.parent / "model" / "model_dict"))
         self.model = model
         model.eval()

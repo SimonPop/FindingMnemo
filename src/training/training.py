@@ -1,5 +1,5 @@
-from src.dataset.phonetic_pair_dataset_v2 import PhoneticPairDataset
-from src.model.sound_siamese_v2 import SoundSiamese
+from dataset.phonetic_pair_dataset import PhoneticPairDataset
+from model.phonetic_siamese import PhoneticSiamese
 from src.training.config import CONFIG
 
 from pytorch_lightning.loggers import MLFlowLogger
@@ -11,8 +11,6 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 import mlflow
 import torch
 import optuna
-
-seed_everything(0)
 
 dataset = PhoneticPairDataset(
     best_pairs_path=CONFIG.best_pairs_dataset, worst_pairs_path=CONFIG.worst_pairs_dataset
@@ -29,7 +27,7 @@ def objective(trial):
     trainer = Trainer(
         max_epochs=CONFIG.max_epochs,
         logger=mlf_logger,
-        # callbacks=[EarlyStopping(monitor="validation_loss", mode="min")]
+        callbacks=[EarlyStopping(monitor="validation_loss", mode="min")]
     )
     instance = instanciate(
         {
@@ -66,7 +64,7 @@ def instanciate(kwargs):
     test_dataloader = DataLoader(
         test_set, batch_size=kwargs["batch_size"], num_workers=4
     )
-    model = SoundSiamese(
+    model = PhoneticSiamese(
         embedding_dim=kwargs["embedding_dim"],
         dim_feedforward=kwargs["dim_feedforward"],
         nhead=kwargs["nhead"],
@@ -90,6 +88,8 @@ def test_model(model, test_dataloader, trainer):
 
 
 if __name__ == "__main__":
+    seed_everything(CONFIG.seed)
     study = optuna.create_study()
     study.optimize(objective, n_trials=CONFIG.n_trials)
     study.best_params
+    # TODO use profiling.

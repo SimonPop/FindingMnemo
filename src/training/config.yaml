@@ -2,7 +2,9 @@ experiment_name: "phonetic_siamese_model"
 
 max_epochs: 100
 
-n_trials: 100
+n_trials: 5
 
-best_pairs_dataset: "best_pairs.csv"
-worst_pairs_dataset: "worst_pairs.csv"
+seed: 0
+
+best_pairs_dataset: "C:\\Users\\simon\\Projets\\FindingMnemo\\src\\dataset\\pairing\\best_pairs.csv"
+worst_pairs_dataset: "C:\\Users\\simon\\Projets\\FindingMnemo\\src\\dataset\\pairing\\worst_pairs.csv"

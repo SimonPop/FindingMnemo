@@ -1,5 +1,6 @@
 from src.dataset.phonetic_pair_dataset_v2 import PhoneticPairDataset
 from src.model.sound_siamese_v2 import SoundSiamese
+from src.training.config import CONFIG
 
 from pytorch_lightning.loggers import MLFlowLogger
 from pytorch_lightning.utilities.seed import seed_everything
@@ -14,7 +15,7 @@ import optuna
 seed_everything(0)
 
 dataset = PhoneticPairDataset(
-    best_pairs_path="best_pairs.csv", worst_pairs_path="worst_pairs.csv"
+    best_pairs_path=CONFIG.best_pairs_dataset, worst_pairs_path=CONFIG.worst_pairs_dataset
 )
 train_set, val_set, test_set = torch.utils.data.random_split(
     dataset, [len(dataset) - 200, 100, 100]
@@ -23,10 +24,10 @@ train_set, val_set, test_set = torch.utils.data.random_split(
 
 def objective(trial):
     mlf_logger = MLFlowLogger(
-        experiment_name="lightning_logs", tracking_uri="file:./mlruns"
+        experiment_name=CONFIG.experiment_name, tracking_uri="file:./mlruns"
     )
     trainer = Trainer(
-        max_epochs=10,
+        max_epochs=CONFIG.max_epochs,
         logger=mlf_logger,
         # callbacks=[EarlyStopping(monitor="validation_loss", mode="min")]
     )
@@ -90,5 +91,5 @@ def test_model(model, test_dataloader, trainer):
 
 if __name__ == "__main__":
     study = optuna.create_study()
-    study.optimize(objective, n_trials=100)
+    study.optimize(objective, n_trials=CONFIG.n_trials)
     study.best_params

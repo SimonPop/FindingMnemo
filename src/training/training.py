@@ -48,7 +48,7 @@ def objective(trial):
     test_loss = test_model(model, instance["test_dataloader"], trainer)[0]["test_loss"]
 
     with mlflow.start_run():
-        mlflow.pytorch.log_model(model)
+        mlflow.pytorch.log_model(model, "file:./mlruns/models/")
         mlflow.log_params(trial.params)
         mlflow.log_metric("final_test_loss", test_loss)
 

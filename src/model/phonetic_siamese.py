@@ -15,8 +15,12 @@ class PhoneticSiamese(pl.LightningModule):
         padding: int = 50,
         nhead: int = 1,
         dim_feedforward: int = 16,
+        loss_type: str = 'pair' # 'triplet'
     ):
         super().__init__()
+
+        self.loss_type = loss_type
+
         self.padding = padding
         self.embedding_dim = embedding_dim
         self.vocabulary = {w: i for i, w in enumerate(UNICODE_TO_IPA.keys())}
@@ -32,6 +36,9 @@ class PhoneticSiamese(pl.LightningModule):
         self.cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         self.p_enc_1d_model = PositionalEncoding1D(self.embedding_dim)
         self.p_enc_1d_model_sum = Summer(self.p_enc_1d_model)
+
+        self.triplet_loss = torch.nn.TripletMarginLoss(margin=1.0, p=2)
+
         self.save_hyperparameters()
 
     def forward(self, a: List[str], b: List[str]):
@@ -50,7 +57,7 @@ class PhoneticSiamese(pl.LightningModule):
         return x
 
     def training_step(self, batch, batch_idx):
-        loss = self._step(batch)
+        loss = self._step_mse(batch)
         self.log(
             "training_loss",
             loss,
@@ -62,7 +69,7 @@ class PhoneticSiamese(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss = self._step(batch)
+        loss = self._step_mse(batch)
         self.log(
             "validation_loss",
             loss,
@@ -74,13 +81,21 @@ class PhoneticSiamese(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
-        loss = self._step(batch)
+        loss = self._step_mse(batch)
         self.log(
             "test_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True
         )
         return loss
 
     def _step(self, batch):
+        if self.loss_type == 'triplet':
+            return self._step_triplet(batch)
+        elif self.loss_type == 'pair':
+            return self._step_mse(batch)
+        else:
+            raise ValueError('Unknown loss_type passed: {}. Please choose among ["pair", "triplet"].'.format(self.loss_type))
+
+    def _step_mse(self, batch):
         chinese_match = batch["chinese_phonetic"]
         english_match = batch["english_phonetic"]
 
@@ -88,6 +103,18 @@ class PhoneticSiamese(pl.LightningModule):
         similarity = 1 - batch["distance"].float()
         loss = nn.functional.mse_loss(y_hat, similarity)
         return loss
+
+    def  _step_triplet(self, batch):
+        anchor_match = batch["anchor_phonetic"]
+        positive_match = batch["similar_phonetic"]
+        negative_match = batch["distant_phonetic"]
+
+        anchor_embedding = self.encode(anchor_match)
+        positive_embedding = self.encode(positive_match)
+        neegative_embedding = self.encode(negative_match)
+        loss = self.triplet_loss(anchor_embedding, positive_embedding, neegative_embedding)
+        return loss
+
 
     def pad(self, tensor):
         return nn.functional.pad(

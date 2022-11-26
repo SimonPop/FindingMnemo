@@ -4,6 +4,9 @@ import numpy as np
 import panphon.distance
 from pathlib import Path
 
+"""
+This script is designed to find the best sub-distance combiations in order to best characterize english <> chinese pronunciation difference.
+"""
 
 # print(balanced_df.sample(30))
 

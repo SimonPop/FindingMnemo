@@ -5,7 +5,7 @@ from torch import optim, nn
 import pytorch_lightning as pl
 from typing import List
 from positional_encodings.torch_encodings import PositionalEncoding1D, Summer
-
+from src.training.config import LossType
 
 class PhoneticSiamese(pl.LightningModule):
     def __init__(
@@ -15,11 +15,13 @@ class PhoneticSiamese(pl.LightningModule):
         padding: int = 50,
         nhead: int = 1,
         dim_feedforward: int = 16,
-        loss_type: str = 'pair' # 'triplet'
+        loss_type: LossType = LossType.Pair,
+        batch_size: int = 8
     ):
         super().__init__()
 
         self.loss_type = loss_type
+        self.batch_size = batch_size
 
         self.padding = padding
         self.embedding_dim = embedding_dim
@@ -57,7 +59,7 @@ class PhoneticSiamese(pl.LightningModule):
         return x
 
     def training_step(self, batch, batch_idx):
-        loss = self._step_mse(batch)
+        loss = self._step(batch)
         self.log(
             "training_loss",
             loss,
@@ -65,11 +67,12 @@ class PhoneticSiamese(pl.LightningModule):
             on_epoch=True,
             prog_bar=True,
             logger=True,
+            batch_size=self.batch_size
         )
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss = self._step_mse(batch)
+        loss = self._step(batch)
         self.log(
             "validation_loss",
             loss,
@@ -77,20 +80,22 @@ class PhoneticSiamese(pl.LightningModule):
             on_epoch=True,
             prog_bar=True,
             logger=True,
+            batch_size=self.batch_size
         )
         return loss
 
     def test_step(self, batch, batch_idx):
-        loss = self._step_mse(batch)
+        loss = self._step(batch)
         self.log(
-            "test_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True
+            "test_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True,
+            batch_size=self.batch_size
         )
         return loss
 
     def _step(self, batch):
-        if self.loss_type == 'triplet':
+        if self.loss_type == LossType.Triplet:
             return self._step_triplet(batch)
-        elif self.loss_type == 'pair':
+        elif self.loss_type == LossType.Pair:
             return self._step_mse(batch)
         else:
             raise ValueError('Unknown loss_type passed: {}. Please choose among ["pair", "triplet"].'.format(self.loss_type))

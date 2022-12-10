@@ -1,6 +1,9 @@
 from dataset.phonetic_pair_dataset import PhoneticPairDataset
+from dataset.phonetic_triplet_dataset import PhoneticTripletDataset
 from model.phonetic_siamese import PhoneticSiamese
-from src.training.config import CONFIG
+from src.training.config import CONFIG, LossType
+from torch.utils.data import Dataset
+from pathlib import Path
 
 from pytorch_lightning.loggers import MLFlowLogger
 from pytorch_lightning.utilities.seed import seed_everything
@@ -12,9 +15,21 @@ import mlflow
 import torch
 import optuna
 
-dataset = PhoneticPairDataset(
-    best_pairs_path=CONFIG.best_pairs_dataset, worst_pairs_path=CONFIG.worst_pairs_dataset
-)
+def get_dataset() -> Dataset:
+    """Returns a Dataset object given loss type."""
+    if CONFIG.loss_type == LossType.Pair:
+        dataset = PhoneticPairDataset(
+            best_pairs_path=CONFIG.best_pairs_dataset, worst_pairs_path=CONFIG.worst_pairs_dataset
+        )
+    elif CONFIG.loss_type == LossType.Triplet:
+        dataset = PhoneticTripletDataset(
+            best_pairs_path=CONFIG.best_pairs_dataset, worst_pairs_path=CONFIG.worst_pairs_dataset
+        )
+    else:
+        raise ValueError(f'Unknown loss type given: {CONFIG.loss_type}')
+    return dataset
+
+dataset = get_dataset()
 train_set, val_set, test_set = torch.utils.data.random_split(
     dataset, [len(dataset) - 200, 100, 100]
 )
@@ -22,7 +37,7 @@ train_set, val_set, test_set = torch.utils.data.random_split(
 
 def objective(trial):
     mlf_logger = MLFlowLogger(
-        experiment_name=CONFIG.experiment_name, tracking_uri="file:./mlruns"
+        experiment_name=CONFIG.experiment_name, tracking_uri=CONFIG.log_folder
     )
     trainer = Trainer(
         max_epochs=CONFIG.max_epochs,
@@ -48,9 +63,10 @@ def objective(trial):
     test_loss = test_model(model, instance["test_dataloader"], trainer)[0]["test_loss"]
 
     with mlflow.start_run():
-        mlflow.pytorch.log_model(model, "file:./mlruns/models/")
+        mlflow.pytorch.log_model(model, "model")
         mlflow.log_params(trial.params)
         mlflow.log_metric("final_test_loss", test_loss)
+        mlflow.log_param("loss_type", CONFIG.loss_type)
 
     return test_loss
 
@@ -69,6 +85,8 @@ def instanciate(kwargs):
         dim_feedforward=kwargs["dim_feedforward"],
         nhead=kwargs["nhead"],
         dropout=kwargs["dropout"],
+        loss_type=CONFIG.loss_type,
+        batch_size=kwargs["batch_size"]
     )
     return {
         "train_dataloader": train_dataloader,

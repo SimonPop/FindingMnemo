@@ -1,10 +1,6 @@
-from pathlib import Path
 from pydantic import BaseModel
 from typing import List
 from collections import deque
-from bs4 import BeautifulSoup
-import requests
-from os.path import join
 from src.dataset.wiktionary_graph.wiktionaryparser.core import WiktionaryParser
 
 class WiktionaryEntry(BaseModel):
@@ -24,16 +20,19 @@ class Scrapper():
 
     def breadth_first_search_scrapping(self, root: str, limit: int = None) -> List[WiktionaryEntry]:
         already_visited = self.client.list_words()
+        def handle_word(word):
+            entry = self.scrap(word)
+            self.client.store(entry)
+            queue.extend(entry.related_words)
+            already_visited.append(word)
         queue = deque()
-        self.scrap(root)
+        handle_word(root)
         while len(queue) > 0 and limit > 0:
             word = queue.pop()
             if not word in already_visited:
-                entry = self.scrap(word)
-                self.client.store(entry)
-                queue.extend(entry.related_words)
-                already_visited.append(word)
+                handle_word(word)
                 limit -=1
+        return 
 
     def scrap(self, word: str = "mnemonic") -> WiktionaryEntry:
         results = self.parser.fetch(word)
@@ -59,14 +58,19 @@ class Scrapper():
 class Neo4jClient():
     def __init__(self, index_name: str):
         self.index_name = index_name
+        self.temporary_store = []
 
     def store(self, entry: WiktionaryEntry):
-        pass
+        # TODO: use Neo4J instead.
+        self.temporary_store.append(entry)
 
     def list_words(self) -> List[str]:
-        pass
+        # TODO: use Neo4J instead.
+        return [e.title for e in self.temporary_store]
 
 if __name__ == "__main__":
     from pprint import pprint
     scrapper = Scrapper()
-    pprint(scrapper.scrap())
+    scrapper.breadth_first_search_scrapping("mnemonic", 5)
+    pprint(scrapper.client.temporary_store)
+    # pprint(scrapper.scrap("mnemonic"))

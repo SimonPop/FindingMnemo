@@ -26,8 +26,8 @@ class PhoneticPairDataset(Dataset):
         all_pairs = list(self.create_pairs())
         third = len(all_pairs)
         self.training_pairs = all_pairs[:third]
-        self.validation_pairs = [third:2*third]
-        self.test_pairs = [2*third:]
+        self.validation_pairs = all_pairs[third:2*third]
+        self.test_pairs = all_pairs[2*third:]
 
     def compute_distances(self):
         """Compute distance between each pair of nodes.

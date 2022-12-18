@@ -1,45 +1,62 @@
 from torch.utils.data import Dataset
 import networkx as nx
+from itertools import combinations
+from sklearn.cluster import SpectralClustering
+from torch_geometric.utils.convert import from_networkx
 
 class PhoneticPairDataset(Dataset):
     def __init__(self, mode: str = "train"):
         self.client = None # TODO: neo4j client?
         self.mode = mode
 
+        self.graph = self.load_graph()
+        self.distance_matrix = self.compute_distances()
+        self.graph = self.decouple_graph()
+        self.data = from_networkx(self.graph)
+
         self.training_pairs = []
         self.validation_pairs = []
         self.test_pairs = []
-
-        self.distance_matrix = self.compute_distances()
 
     def load_graph(self) -> nx.Graph:
         """Load graph using client."""
         pass
 
     def split_graph(self):
-        all_pairs = self.create_pairs()
-        training_pairs = []
-        validation_pairs = []
-        test_pairs = []
+        all_pairs = list(self.create_pairs())
+        third = len(all_pairs)
+        self.training_pairs = all_pairs[:third]
+        self.validation_pairs = [third:2*third]
+        self.test_pairs = [2*third:]
 
     def compute_distances(self):
         """Compute distance between each pair of nodes.
         """
-        distance_matrix = None
+        distance_matrix = nx.floyd_warshall(self.graph)
         return distance_matrix
 
-    def decouple_gaph(self, n_component: int):
+    def decouple_graph(self, n_component: int):
         """Decouple graph into n_component.
 
         Args:
             n_component (int): Number of component to decouple the graph into.
         """
-        return 
+        # 1. Find n clusters.
+        adj_mat = nx.to_numpy_matrix(self.graph)
+        sc = SpectralClustering(n_component, affinity='precomputed', n_init=100)
+        sc.fit(adj_mat)
+        labels = sc.labels_
+        # 2. Remove all edges inter-cluster.
+        for node_a, node_b in self.graph.edges():
+            if labels[node_a] != labels[node_b]:
+                self.graph.remove_edge(node_a, node_b)
+        return self.graph
 
     def create_pairs(self):
-        """Create pair of nodes.
+        """Create pair of nodes iterator.
         """
-        return []
+        nodes = self.graph.nodes()
+        return combinations(nodes, 2)
 
     def __getitem__(self, index):
         pair = self.get_pairs()[index]
@@ -48,7 +65,7 @@ class PhoneticPairDataset(Dataset):
         # TODO convert graph to PyG graph.
         return {
             "label": distance,
-            "graph": None,
+            "graph": self.data,
             "pair": pair
         }
 

@@ -3,10 +3,11 @@ import networkx as nx
 from itertools import combinations
 from sklearn.cluster import SpectralClustering
 from torch_geometric.utils.convert import from_networkx
+from dataset.database_handler import DatabaseHandler
 
-class PhoneticPairDataset(Dataset):
+class GraphDistanceDataset(Dataset):
     def __init__(self, mode: str = "train"):
-        self.client = None # TODO: neo4j client?
+        self.client = DatabaseHandler()
         self.mode = mode
 
         self.graph = self.load_graph()
@@ -81,5 +82,5 @@ class PhoneticPairDataset(Dataset):
         return pairs
 
     def __len__(self):
-        return len(self.get_pairs)
+        return len(self.get_pairs())
 

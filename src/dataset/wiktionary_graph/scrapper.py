@@ -1,12 +1,8 @@
-from pydantic import BaseModel
 from typing import List
 from collections import deque
 from src.dataset.wiktionary_graph.wiktionaryparser.core import WiktionaryParser
-
-class WiktionaryEntry(BaseModel):
-    title: str # Used as label
-    definition: str # Later used to get an encoding.
-    related_words: List[str] # Used to find neighbors in the graph
+from src.dataset.wiktionary_graph.wiktionay_entry import WiktionaryEntry
+from dataset.database_handler import DatabaseHandler
 
 class Scrapper():
     """
@@ -15,14 +11,14 @@ class Scrapper():
 
     def __init__(self):
         self.url = 'https://www.wiktionary.org/wiki/'
-        self.client = Neo4jClient(index_name="wiktionary")
+        self.client = DatabaseHandler(uri="bolt://localhost:7687", user="simon", password="wiktionary")
         self.parser = WiktionaryParser()
 
     def breadth_first_search_scrapping(self, root: str, limit: int = None) -> List[WiktionaryEntry]:
         already_visited = self.client.list_words()
         def handle_word(word):
             entry = self.scrap(word)
-            self.client.store(entry)
+            self.client.store_entry(entry)
             queue.extend(entry.related_words)
             already_visited.append(word)
         queue = deque()
@@ -53,24 +49,21 @@ class Scrapper():
         Args:
             entry (WiktionaryEntry): Entry to store.
         """
-        pass
+        self.client.store_entry(entry)
 
-class Neo4jClient():
-    def __init__(self, index_name: str):
-        self.index_name = index_name
-        self.temporary_store = []
+# class Neo4jClient():
+#     def __init__(self, index_name: str):
+#         self.index_name = index_name
+#         self.temporary_store = []
 
-    def store(self, entry: WiktionaryEntry):
-        # TODO: use Neo4J instead.
-        self.temporary_store.append(entry)
+#     def store(self, entry: WiktionaryEntry):
+#         # TODO: use Neo4J instead.
+#         self.temporary_store.append(entry)
 
-    def list_words(self) -> List[str]:
-        # TODO: use Neo4J instead.
-        return [e.title for e in self.temporary_store]
+#     def list_words(self) -> List[str]:
+#         # TODO: use Neo4J instead.
+#         return [e.title for e in self.temporary_store]
 
 if __name__ == "__main__":
-    from pprint import pprint
     scrapper = Scrapper()
     scrapper.breadth_first_search_scrapping("mnemonic", 5)
-    pprint(scrapper.client.temporary_store)
-    # pprint(scrapper.scrap("mnemonic"))

@@ -66,4 +66,4 @@ class Scrapper():
 
 if __name__ == "__main__":
     scrapper = Scrapper()
-    scrapper.breadth_first_search_scrapping("mnemonic", 5)
+    scrapper.breadth_first_search_scrapping("mnemonic", 200)

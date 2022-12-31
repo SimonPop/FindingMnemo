@@ -19,9 +19,28 @@ class GraphDistanceDataset(Dataset):
         self.validation_pairs = []
         self.test_pairs = []
 
-    def load_graph(self) -> nx.Graph:
+    @staticmethod
+    def load_graph() -> nx.Graph:
         """Load graph using client."""
-        pass
+        greeter = DatabaseHandler("bolt://localhost:7687", "simon", "wiktionary")
+        #TODO: only those with defition
+        query = """
+        MATCH (n)-[r]->(c) RETURN *
+        """
+
+        results = greeter.driver.session().run(query)
+
+        G = nx.MultiDiGraph()
+
+        nodes = list(results.graph()._nodes.values())
+        for node in nodes:
+            G.add_node(node.id, labels=node._labels, properties=node._properties)
+
+        rels = list(results.graph()._relationships.values())
+        for rel in rels:
+            G.add_edge(rel.start_node.id, rel.end_node.id, key=rel.id, type=rel.type, properties=rel._properties)
+
+        return G
 
     def split_graph(self):
         all_pairs = list(self.create_pairs())
@@ -84,3 +103,6 @@ class GraphDistanceDataset(Dataset):
     def __len__(self):
         return len(self.get_pairs())
 
+
+if __name__ == "__main__":
+    print(GraphDistanceDataset.load_graph())

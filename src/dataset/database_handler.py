@@ -11,13 +11,19 @@ class DatabaseHandler:
         self.driver.close()
 
     def store_entry(self, entry: WiktionaryEntry):
-        self.create_node(entry.title, entry.definition)
+        self.create_or_set_node(entry.title, entry.definition)
         for related_entry in entry.related_words:
             self.create_relation(entry.title, related_entry)
 
-    def create_node(self, title: str, definition: str):
+    def create_or_set_node(self, title: str, definition: str):
+        title = title.replace("'", " ").replace("{", " ").replace("}", " ").replace('"', " ").replace('\\', " ")
+        definition = definition.replace("'", " ").replace("{", " ").replace("}", " ").replace('"', " ").replace('\\', " ")
         with self.driver.session() as session:
-            session.run(f"CREATE (d:Definition {{title: '{title}', definition: '{definition}'}})")
+            query = f""" MERGE (d:Definition {{title: "{title}"}})
+                ON CREATE SET d.definition = "{definition}"
+                ON MATCH SET d.definition = "{definition}"
+            """
+            session.run(query)
 
     def create_relation(self, title_1: str, title_2: str):
         with self.driver.session() as session:

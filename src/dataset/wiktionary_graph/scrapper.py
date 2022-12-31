@@ -34,14 +34,16 @@ class Scrapper():
         results = self.parser.fetch(word)
         links = []
         related_words = []
+        texts = []
         for result in results:
             for definition in result["definitions"]:
                 links.extend(definition['links'])
                 related_words.extend(definition['relatedWords'])
+                texts.extend(definition['text'])
             # result["pronunciations"] TODO pronunciations links
             # TODO definition / s
             # TODO: remove itself
-        return WiktionaryEntry(title=word, definition="", related_words=links)
+        return WiktionaryEntry(title=word, definition='.'.join(texts), related_words=links)
 
     def store_entry(self, entry: WiktionaryEntry) -> None:
         """Stores entry into Neo4J database.
@@ -51,19 +53,8 @@ class Scrapper():
         """
         self.client.store_entry(entry)
 
-# class Neo4jClient():
-#     def __init__(self, index_name: str):
-#         self.index_name = index_name
-#         self.temporary_store = []
-
-#     def store(self, entry: WiktionaryEntry):
-#         # TODO: use Neo4J instead.
-#         self.temporary_store.append(entry)
-
-#     def list_words(self) -> List[str]:
-#         # TODO: use Neo4J instead.
-#         return [e.title for e in self.temporary_store]
-
 if __name__ == "__main__":
     scrapper = Scrapper()
-    scrapper.breadth_first_search_scrapping("mnemonic", 200)
+    scrapper.breadth_first_search_scrapping("international", 50)
+    # TODO run this on every word of the dataset for making matching possible.
+    # TODO: Better parse definition

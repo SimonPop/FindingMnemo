@@ -23,7 +23,6 @@ class EmbeddingHeuristic():
 EMBEDDING_HEURISTIC = EmbeddingHeuristic()
 
 if __name__ == "__main__":
-    
-    print("High", eh.similarity("penguin", "dog"))
-    print("Medium", eh.similarity("penguin", "marine"))
-    print("Low", eh.similarity("penguin", "table"))
+    print("High", EMBEDDING_HEURISTIC.similarity("penguin", "dog"))
+    print("Medium", EMBEDDING_HEURISTIC.similarity("penguin", "marine"))
+    print("Low", EMBEDDING_HEURISTIC.similarity("penguin", "table"))

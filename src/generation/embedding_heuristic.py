@@ -19,6 +19,9 @@ class EmbeddingHeuristic():
 
     def distance(self, a: str, b: str) -> float:
         return 1 / self.similarity(a,b) + 1e-3
+    
+    def word_available(self, word: str) -> bool:
+        return word in self.model
 
 EMBEDDING_HEURISTIC = EmbeddingHeuristic()
 

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from src.generation.embedding_heuristic import EMBEDDING_HEURISTIC
 from typing import List
+import networkx as nx
+from src.dataset.database_handler import DatabaseHandler
 
 class Node():
     word: str
@@ -25,6 +27,8 @@ class Node():
 class AStar():
     def __init__(self):
         self.jump_limit = 100
+        self.handler = DatabaseHandler("bolt://localhost:7687", "simon", "wiktionary")
+        self.temporary_graph: nx.Graph = self.handler.load_graph()
 
     def find_path(self, start: str, target: str):
         nodes = []
@@ -46,15 +50,23 @@ class AStar():
                     if neighbor_node in visited_nodes:
                         continue
                     elif neighbor_node in nodes:
-                        continue
-                    else:
+                        for n in nodes:
+                            if n == neighbor_node:
+                                n.parent = node
+                    elif EMBEDDING_HEURISTIC.word_available(neighbor_node.word):
                         neighbor_node.set_heuristic(target)
+                        neighbor_node.parent = node
                         nodes.append(neighbor_node)
 
     def get_neighbors(self, node: Node) -> List[str]:
-        # TODO: get neighbors from Neo4J.
-        return ["dog", "cat", "table"]
+        return self.temporary_graph.neighbors(node.word)
 
 if __name__ == '__main__':
     a_start = AStar()
-    print(a_start.find_path("penguin", "table"))
+    n = a_start.get_neighbors(Node(word="pride"))
+    target = a_start.find_path("dignity", "pride")
+    parent = target.parent
+    while not parent is None:
+        print(parent.word)
+        parent = parent.parent
+    # TODO: handle parents

@@ -35,7 +35,19 @@ class DatabaseHandler:
                 """)
 
     def load_graph(self) -> nx.Graph:
-        return 
+        query = f"""
+        MATCH (d1:Definition)-[r:MENTIONS]->(d2:Definition)
+        RETURN *
+        """
+        graph = nx.Graph()
+        with self.driver.session() as session:
+            result = session.run(query)
+            data =  result.data()
+        for link in data:
+            a, _, b = link['r']
+            graph.add_edge(a['title'], b['title'])
+        return graph        
+
 
     def list_words(self) -> List[str]:
         with self.driver.session() as session:
@@ -48,11 +60,14 @@ class DatabaseHandler:
         return []
 
 if __name__ == "__main__":
-    entry = WiktionaryEntry(
-        title="Test",
-        definition="Test",
-        related_words=[]
-    )
-    greeter = DatabaseHandler("bolt://localhost:7687", "simon", "wiktionary")
-    greeter.store_entry(entry)
-    greeter.close()
+    # entry = WiktionaryEntry(
+    #     title="Test",
+    #     definition="Test",
+    #     related_words=[]
+    # )
+    # greeter = DatabaseHandler("bolt://localhost:7687", "simon", "wiktionary")
+    # greeter.store_entry(entry)
+    # greeter.close()
+    handler = DatabaseHandler("bolt://localhost:7687", "simon", "wiktionary")
+    res = handler.load_graph()
+    print(res.nodes(data=True))

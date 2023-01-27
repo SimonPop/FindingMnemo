@@ -3,12 +3,14 @@ import pandas as pd
 from dragonmapper import hanzi
 from eng_to_ipa import convert
 import panphon.distance
-from src.dataset.phonemes.custom_phonemes import CustomPhonemes
+from src.pairing.dataset.phonemes.custom_phonemes import CustomPhonemes
 from tqdm import tqdm
 tqdm.pandas()
 from typing import Optional
 
 class Vocabulary():
+    """Used for creating both english & chinese datasets containing necessary features used for pairing. 
+    """
     def __init__(self):
         self.dst = panphon.distance.Distance()
         self.file_path = Path(__file__).parent

@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd 
 import torch
 
-from model.phonetic_siamese import PhoneticSiamese
+from pairing.model.phonetic_siamese import PhoneticSiamese
 
 class Indexer(Executor):
     model: PhoneticSiamese

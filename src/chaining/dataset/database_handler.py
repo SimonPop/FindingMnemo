@@ -1,5 +1,5 @@
 from neo4j import GraphDatabase
-from src.dataset.wiktionary_graph.wiktionay_entry import WiktionaryEntry
+from src.chaining.dataset.wiktionary_graph.wiktionay_entry import WiktionaryEntry
 from typing import List
 import networkx as nx
 

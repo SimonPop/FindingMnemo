@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from jina import DocumentArray, Document
 
-from src.generation.text_generator import TextGenerator
-from src.search.engine import Engine
-from src.search.indexer import Indexer
+from text_generation.generation.text_generator import TextGenerator
+from src.pairing.search.engine import Engine
+from src.pairing.search.indexer import Indexer
 
-from src.utils.ipa import convert_mandarin_to_ipa
+from src.pairing.utils.ipa import convert_mandarin_to_ipa
 
 from typing import List
 

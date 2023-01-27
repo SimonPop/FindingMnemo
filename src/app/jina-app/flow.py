@@ -1,7 +1,7 @@
 from jina import Flow, Document, DocumentArray
-from src.generation.text_generator import TextGenerator
-from src.search.engine import Engine
-from src.search.indexer import Indexer
+from text_generation.generation.text_generator import TextGenerator
+from src.pairing.search.engine import Engine
+from src.pairing.search.indexer import Indexer
 
 
 if __name__ == "__main__":

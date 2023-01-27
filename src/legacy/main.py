@@ -6,9 +6,8 @@ def main():
         text = f.read()
     wg = WordGraph(corpus=text, state_size=2)
 
-
-    input_word = ''
-    translation = ''
+    input_word = ""
+    translation = ""
 
     closest_word = wg.find_closest_word(input_word)
 

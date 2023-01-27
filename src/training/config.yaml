@@ -1,8 +1,0 @@
-experiment_name: "phonetic_siamese_model"
-max_epochs: 100
-n_trials: 5
-seed: 0
-loss_type: "triplet"
-best_pairs_dataset: "C:\\Users\\simon\\Projets\\FindingMnemo\\src\\dataset\\pairing\\best_pairs.csv"
-worst_pairs_dataset: "C:\\Users\\simon\\Projets\\FindingMnemo\\src\\dataset\\pairing\\worst_pairs.csv"
-log_folder: "file:C:\\Users\\simon\\Projets\\FindingMnemo\\mlruns\\"

@@ -4,7 +4,7 @@ import pandas as pd
 from typing import List
 from tqdm import tqdm
 from pathlib import Path
-from src.dataset.pairing import Pair
+from src.pairing.dataset.pairing import Pair
 
 class PairingMaker:
     """

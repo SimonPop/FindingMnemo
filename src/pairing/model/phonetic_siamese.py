@@ -5,7 +5,7 @@ from torch import optim, nn
 import pytorch_lightning as pl
 from typing import List
 from positional_encodings.torch_encodings import PositionalEncoding1D, Summer
-from src.training.config import LossType
+from src.pairing.training.config import LossType
 
 class PhoneticSiamese(pl.LightningModule):
     def __init__(

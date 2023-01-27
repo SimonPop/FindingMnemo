@@ -1,4 +1,4 @@
-from model.phonetic_siamese import PhoneticSiamese
+from pairing.model.phonetic_siamese import PhoneticSiamese
 
 from jina import requests, DocumentArray, Document, Executor, Flow
 from typing import Dict, Union

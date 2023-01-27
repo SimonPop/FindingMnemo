@@ -1,7 +1,7 @@
-from dataset.phonetic_pair_dataset import PhoneticPairDataset
-from dataset.phonetic_triplet_dataset import PhoneticTripletDataset
-from model.phonetic_siamese import PhoneticSiamese
-from src.training.config import CONFIG, LossType
+from src.pairing.dataset.phonetic_pair_dataset import PhoneticPairDataset
+from src.pairing.dataset.phonetic_triplet_dataset import PhoneticTripletDataset
+from src.pairing.model.phonetic_siamese import PhoneticSiamese
+from src.pairing.training.config import CONFIG, LossType
 from torch.utils.data import Dataset
 from pathlib import Path
 
@@ -51,6 +51,7 @@ def objective(trial):
             "batch_size": 2 ** trial.suggest_int("batch_size", 0, 4),
             "nhead": 2 ** trial.suggest_int("nhead", 0, 3),
             "embedding_dim": 2 ** trial.suggest_int("embedding_dim", 4, 10),
+            "model": CONFIG.model_type
         }
     )
     model = fit_model(

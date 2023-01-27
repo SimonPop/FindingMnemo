@@ -7,6 +7,10 @@ class LossType(Enum):
     Triplet = "triplet"
     Pair = "pair"
 
+class ModelType(Enum):
+    PhoneticSiamese = "phonetic_siamese"
+    NaiveBaseline = "naive_baseline"
+
 class TrainingConfig(BaseModel):
     experiment_name: str
     max_epochs: int = 100
@@ -16,6 +20,7 @@ class TrainingConfig(BaseModel):
     best_pairs_dataset: str = "best_pairs.csv"
     worst_pairs_dataset: str = "worst_pairs.csv"
     loss_type: LossType = "pair"
+    model_type: ModelType = "phonetic_siamese"
 
 def read_config() -> TrainingConfig:
     config_path = Path(__file__).parent / 'config.yaml'

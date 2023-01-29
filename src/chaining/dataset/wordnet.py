@@ -49,9 +49,9 @@ class LabelledWordNet18RR(InMemoryDataset):
         n_sample: int = 1000,
         mode: str = 'train'
     ):
-        super().__init__(root, transform, pre_transform)
         self.n_sample = n_sample
         self.mode = mode
+        super().__init__(root, transform, pre_transform)
         self.data, self.slices = torch.load(self.processed_paths[0])
         with open(self.processed_paths[0][:-3] + "id.json", "r") as f:
             self.id2node = json.load(f)
@@ -89,16 +89,16 @@ class LabelledWordNet18RR(InMemoryDataset):
         for filename in self.raw_file_names:
             download_url(f'{self.url}/{filename}', self.raw_dir)
 
-    def get_mode_index(self, mode):
+    def get_node_mask(self, mode):
         if mode == "train":
-            mask = self.data.train_mask
+            return list(range(0, self.data.num_nodes//2))
         elif mode == "val":
-            mask = self.data.val_mask
+            return list(range(self.data.num_nodes//2, self.data.num_nodes//2 + self.data.num_nodes//4))
         elif mode == "test":
-            mask = self.data.test_mask
+            return list(range(self.data.num_nodes//2 + self.data.num_nodes//4, self.data.num_nodes))
         else:
             raise ValueError('Unknown mode. Please use mode in [train, val, test].')
-        return [i for i, x in enumerate(mask) if x]
+        # return [i for i, x in enumerate(mask) if x]
 
     def sample_pairs(self):
         """
@@ -106,22 +106,49 @@ class LabelledWordNet18RR(InMemoryDataset):
         Compute for each mode (train / val / test) a set of pairs with their length.
         train / val / test nodes are based on the masks contained in the self.data object.
         """
-        train_indexes = self.get_mode_index("train")
-        val_indexes = self.get_mode_index("val")
-        test_indexes = self.get_mode_index("test")
-        graph = to_networkx(self.data) 
-        path = dict(nx.all_pairs_shortest_path(graph))
+        train_indexes = self.get_node_mask("train")
+        val_indexes = self.get_node_mask("val")
+        test_indexes = self.get_node_mask("test")
+        
+        graph = nx.Graph(to_networkx(self.data)) 
+        components = nx.connected_components(graph)
+        node2pool = {}
+        for component in components:
+            componentxtrain = component.intersection(train_indexes) 
+            componentxval = component.intersection(val_indexes) 
+            componentxtest = component.intersection(test_indexes) 
+            # Link node to a component x mask (only nodes of the same component with the same mask should be taken).
+            for node in component:
+                if node in train_indexes:
+                    node2pool[node] = list(componentxtrain)
+                elif node in val_indexes:
+                    node2pool[node] = list(componentxval)
+                elif node in test_indexes:
+                    node2pool[node] = list(componentxtest)
+                else:
+                    raise KeyError("?")
+
         pairs = {}
-        for mode, indexes in zip(['train', 'val', 'test'], [train_indexes, val_indexes, test_indexes]):
-            X, Y = np.random.randint(0, len(indexes), self.n_sample), np.random.randint(0, len(indexes), self.n_sample)
-            X = [indexes[x] for x in X]
-            Y = [indexes[y] for y in Y]
+        for mode, indexes in zip(['train', 'val', 'test'], [train_indexes, val_indexes, test_indexes]):            
+            X = np.random.choice(indexes, self.n_sample).tolist()
+            Y = []
+            for x in X:
+                component = node2pool[x] # Select the same component as X to guarantee there exists a path.
+                y = int(np.random.choice(component))
+                Y.append(y)
             pairs[mode] = {
                 "x": X,
                 "y": Y,
-                "distance": [path[x][y] for x, y in zip(X, Y)]
+                "distance": [self.shortest_path(graph, x, y) for x, y in zip(X, Y)]
             }
         return pairs
+    
+    @staticmethod
+    def shortest_path(graph, x, y) -> int:
+        try:
+            return len(nx.shortest_path(graph, x, y))
+        except: 
+            return -1
 
     def process(self):
         id2node, node2id, idx = {}, {}, 0
@@ -176,12 +203,13 @@ class LabelledWordNet18RR(InMemoryDataset):
         
         if self.pre_transform is not None:
             data = self.pre_filter(data)
-
+        self.data = data
         pairs = self.sample_pairs()
 
         torch.save(self.collate([data]), self.processed_paths[0])
         with open(self.processed_paths[0][:-3] + "id.json", "w") as f:
             json.dump(id2node, f)
+        print(pairs)
         with open(self.processed_paths[0][:-3] + "pairs.json", "w") as f:
             json.dump(pairs, f)
 

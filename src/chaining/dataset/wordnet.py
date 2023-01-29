@@ -3,8 +3,11 @@ from typing import Callable, List, Optional
 
 import torch
 import json
+import networkx as nx
+import numpy as np
 
 from torch_geometric.data import Data, InMemoryDataset, download_url
+from torch_geometric.utils.convert import to_networkx
 
 class LabelledWordNet18RR(InMemoryDataset):
     r"""Modified WordNet18RR dataset from PyG including word names. 
@@ -43,11 +46,36 @@ class LabelledWordNet18RR(InMemoryDataset):
         root: str,
         transform: Optional[Callable] = None,
         pre_transform: Optional[Callable] = None,
+        n_sample: int = 1000,
+        mode: str = 'train'
     ):
         super().__init__(root, transform, pre_transform)
+        self.n_sample = n_sample
+        self.mode = mode
         self.data, self.slices = torch.load(self.processed_paths[0])
-        with open(self.processed_paths[0][:-2] + "json", "r") as f:
+        with open(self.processed_paths[0][:-3] + "id.json", "r") as f:
             self.id2node = json.load(f)
+        with open(self.processed_paths[0][:-3] + "pairs.json", "r") as f:
+            self.pairs = json.load(f)
+        # TODO: Remove nodes that have no embeddings in Glove? 
+        # TODO: Remove nodes that aren't in any of the sampled nodes and their k hops neighborhood?
+        # TODO: Subsample graph to start with?
+
+    def __len__(self):
+        return self.n_sample
+    
+    def __getitem__(self, idx):
+        x = self.pairs[self.mode]['x'][idx]
+        y = self.pairs[self.mode]['y'][idx]
+        label = self.pairs[self.mode]['distance'][idx]
+        subgraph = self.data
+        # TODO: subsample graph to simplify computations?
+        return {
+            "x": x,
+            "y": y,
+            "distance": label,
+            "subgraph": subgraph,
+        }
 
     @property
     def raw_file_names(self) -> List[str]:
@@ -60,6 +88,40 @@ class LabelledWordNet18RR(InMemoryDataset):
     def download(self):
         for filename in self.raw_file_names:
             download_url(f'{self.url}/{filename}', self.raw_dir)
+
+    def get_mode_index(self, mode):
+        if mode == "train":
+            mask = self.data.train_mask
+        elif mode == "val":
+            mask = self.data.val_mask
+        elif mode == "test":
+            mask = self.data.test_mask
+        else:
+            raise ValueError('Unknown mode. Please use mode in [train, val, test].')
+        return [i for i, x in enumerate(mask) if x]
+
+    def sample_pairs(self):
+        """
+        Sample pairs of nodes and compute their shortest distance.
+        Compute for each mode (train / val / test) a set of pairs with their length.
+        train / val / test nodes are based on the masks contained in the self.data object.
+        """
+        train_indexes = self.get_mode_index("train")
+        val_indexes = self.get_mode_index("val")
+        test_indexes = self.get_mode_index("test")
+        graph = to_networkx(self.data) 
+        path = dict(nx.all_pairs_shortest_path(graph))
+        pairs = {}
+        for mode, indexes in zip(['train', 'val', 'test'], [train_indexes, val_indexes, test_indexes]):
+            X, Y = np.random.randint(0, len(indexes), self.n_sample), np.random.randint(0, len(indexes), self.n_sample)
+            X = [indexes[x] for x in X]
+            Y = [indexes[y] for y in Y]
+            pairs[mode] = {
+                "x": X,
+                "y": Y,
+                "distance": [path[x][y] for x, y in zip(X, Y)]
+            }
+        return pairs
 
     def process(self):
         id2node, node2id, idx = {}, {}, 0
@@ -115,7 +177,11 @@ class LabelledWordNet18RR(InMemoryDataset):
         if self.pre_transform is not None:
             data = self.pre_filter(data)
 
+        pairs = self.sample_pairs()
+
         torch.save(self.collate([data]), self.processed_paths[0])
-        with open(self.processed_paths[0][:-2] + "json", "w") as f:
-            self.id2node = json.dump(id2node, f)
+        with open(self.processed_paths[0][:-3] + "id.json", "w") as f:
+            json.dump(id2node, f)
+        with open(self.processed_paths[0][:-3] + "pairs.json", "w") as f:
+            json.dump(pairs, f)
 

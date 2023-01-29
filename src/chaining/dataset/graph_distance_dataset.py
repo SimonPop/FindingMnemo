@@ -3,7 +3,7 @@ import networkx as nx
 from itertools import combinations
 from sklearn.cluster import SpectralClustering
 from torch_geometric.utils.convert import from_networkx
-from dataset.database_handler import DatabaseHandler
+from src.chaining.dataset.database_handler import DatabaseHandler
 
 class GraphDistanceDataset(Dataset):
     def __init__(self, mode: str = "train"):

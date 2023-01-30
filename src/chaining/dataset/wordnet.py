@@ -68,13 +68,11 @@ class LabelledWordNet18RR(InMemoryDataset):
         x = self.pairs[self.mode]['x'][idx]
         y = self.pairs[self.mode]['y'][idx]
         label = self.pairs[self.mode]['distance'][idx]
-        subgraph = self.data
-        # TODO: subsample graph to simplify computations?
         return {
             "x": x,
             "y": y,
             "distance": label,
-            "subgraph": subgraph,
+            # "subgraph": subgraph,
         }
 
     @property
@@ -171,7 +169,6 @@ class LabelledWordNet18RR(InMemoryDataset):
                 src = [node2id[i] for i in src]
                 dst = [node2id[i] for i in dst]
                 edge_type = [self.edge2id[i] for i in edge_type]
-                text_label = [id2node[i] for i in range(len(id2node))]
 
                 srcs.append(torch.tensor(src, dtype=torch.long))
                 dsts.append(torch.tensor(dst, dtype=torch.long))

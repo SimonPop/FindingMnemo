@@ -10,7 +10,13 @@ class PairingMaker:
     """
     PairingMaker can be used to create pairs of chinese <> english terms that either sounds very similar (best pairs) or does not (worst pairs).
     """
-    def __init__(self):
+    def __init__(self, margin: float = 0.2):
+        """
+
+        Args:
+            margin (float): Margin that best & worst pairs should have between themselves (so that triplet loss makes sense in terms of distance)
+            e.g. margin=3, a --> b is 1, a --> c should be >4 since the triplet loss will ask for "dist(a,b) - distance(a,c) + m" to be <0 
+        """
         self.path = Path(__file__).parent
         self.dst = panphon.distance.Distance()
         self.columns = [
@@ -23,6 +29,7 @@ class PairingMaker:
         ]
         self.best_pairs_path = self.path / "best_pairs.csv"
         self.worst_pairs_path = self.path / "worst_pairs.csv"
+        self.margin = margin
 
     def custom_distance(self, chinese_row, english_row) -> float:
         """Computes a custom phonetic distance between an english and chinese term.
@@ -92,8 +99,13 @@ class PairingMaker:
                 english_df.iterrows(), desc=desc.format(chinese_row["pinyin"])
             )
         ]
-        best_row = english_df.iloc[np.argmin(distances)]
-        worst_row = english_df.iloc[np.argmax(distances)]
+        best_index = np.argmin(distances)
+        best_row = english_df.iloc[best_index]
+        best_dst = distances[best_index]
+
+        worst_index = np.argmin([1 + 1e-3 if d < min(max(distances), best_dst + self.margin) else d for d in distances])
+        worst_row = english_df.iloc[worst_index]
+        worst_dst = distances[worst_index]
 
         best_pair = {
             "chinese_hanzi": chinese_row["hanzi"],
@@ -101,7 +113,7 @@ class PairingMaker:
             "chinese_ipa": chinese_row["ipa"],
             "english_word": best_row["word"],
             "english_ipa": best_row["ipa"],
-            "distance": min(distances),
+            "distance": best_dst,
         }
 
         worst_pair = {
@@ -110,11 +122,11 @@ class PairingMaker:
             "chinese_ipa": chinese_row["ipa"],
             "english_word": worst_row["word"],
             "english_ipa": worst_row["ipa"],
-            "distance": max(distances),
+            "distance": worst_dst,
         }
 
         return Pair(**best_pair), Pair(**worst_pair)
-
+    
     def save_data(self, best_pairs: List[dict], worst_pairs: List[dict]) -> None:
         """Saves best and worst pairs in a csv file.
 

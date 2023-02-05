@@ -42,7 +42,8 @@ def objective(trial):
     trainer = Trainer(
         max_epochs=CONFIG.max_epochs,
         logger=mlf_logger,
-        callbacks=[EarlyStopping(monitor="validation_loss", mode="min")]
+        callbacks=[EarlyStopping(monitor="validation_loss", mode="min")],
+        accelerator="gpu", devices=1
     )
     instance = instanciate(
         {
@@ -89,6 +90,7 @@ def instanciate(kwargs):
         loss_type=CONFIG.loss_type,
         batch_size=kwargs["batch_size"]
     )
+    # if torch.cuda.is_available():
     return {
         "train_dataloader": train_dataloader,
         "validation_dataloader": validation_dataloader,
@@ -107,6 +109,7 @@ def test_model(model, test_dataloader, trainer):
 
 
 if __name__ == "__main__":
+    mlflow.set_experiment("Pairing")
     seed_everything(CONFIG.seed)
     study = optuna.create_study()
     study.optimize(objective, n_trials=CONFIG.n_trials)

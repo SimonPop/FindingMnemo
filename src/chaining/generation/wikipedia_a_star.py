@@ -6,16 +6,25 @@ import wikipediaapi
 import spacy
 from sklearn.base import BaseEstimator
 from sklearn.feature_extraction.text import TfidfVectorizer
+from src.chaining.dataset.wikipedia_dataset import WikipediaDataset
 
 class Model():
     nlp: spacy.Language = spacy.load("en_core_web_sm")
     estimator: BaseEstimator
-    tfidf: TfidfVectorizer
+    tfidf: TfidfVectorizer = TfidfVectorizer() #TODO: re-use from training.
 
-model = Model() # >> TODO <<
+    def __init__(self, estimator: BaseEstimator, tfidf: TfidfVectorizer):
+        self.estimator = estimator
+        self.tfidf = tfidf
+
+# >> TODO <<
+from sklearn.ensemble import RandomForestRegressor
+generator = WikipediaDataset(starting_node="Pokémon", hop_nb=10)
+train_set, tf = generator.create_dataset(pair_nb=10)
+model = Model(RandomForestRegressor(n_estimators=10, max_depth=10), tf) 
 
 class Page():
-    page: str
+    page: wikipediaapi.WikipediaPage
     to_target: float = None
     to_start: int = 0
     parent: Page = None
@@ -41,10 +50,10 @@ class Page():
         distance = 1 / (1e-3 + similarity)
         percent_cat = common_categories / all_categories
         tfidf = (model.tfidf.transform(self.summary)*model.tfidf.transform(target.summary).T).toarray()[0][0]
-        self.to_target = model.predict([common_categories, degree_sum, degree_diff, similarity, distance, percent_cat, tfidf])
+        self.to_target = 0 # model.estimator.predict([common_categories, degree_sum, degree_diff, similarity, distance, percent_cat, tfidf])
 
     def __eq__(self, __o: Page) -> bool:
-        return __o.word == self.word 
+        return __o.page == self.page 
     
     def __lt__(self, other: Page) -> bool:
          return self.score() < other.score()
@@ -59,6 +68,8 @@ class AStar():
         visited_nodes = []
 
         nodes.append(Page(self.wiki_wiki.page(start)))
+        
+        target_page = Page(self.wiki_wiki.page(target))
 
         count = 0
 
@@ -68,13 +79,13 @@ class AStar():
             node = nodes.pop(0)
             if node in visited_nodes: # Ignore node.
                 continue
-            elif node.word == target: # Over.
+            elif node == target_page: # Over.
                 return node
             else:
                 visited_nodes.append(node)
                 neighbors = self.get_neighbors(node)
                 for neighbor in neighbors:
-                    neighbor_node = Page(neighbor, to_start=node.to_start + 1)
+                    neighbor_node = Page(self.wiki_wiki.page(neighbor), to_start=node.to_start + 1)
                     if neighbor_node in visited_nodes:
                         continue
                     elif neighbor_node in nodes:
@@ -83,19 +94,20 @@ class AStar():
                                 n.parent = node
                                 n.to_start = min(n.to_start, node.to_start + 1)
                     else:
-                        neighbor_node.set_heuristic(target)
+                        neighbor_node.set_heuristic(target_page)
                         neighbor_node.parent = node
                         nodes.append(neighbor_node)
 
     def get_neighbors(self, node: Page) -> List:
-        return node.page.links
+        forbidden_protocols = ["Category", "Template", "Wikipedia", "User", "Help", "Talk", "Portal", "File", "Module"]
+        return [link for link in node.page.links if all([not link.startswith(x) for x in forbidden_protocols])]
 
 if __name__ == '__main__':
     a_start = AStar()
-    n = a_start.get_neighbors(Node(word="pride"))
-    target = a_start.find_path("dignity", "pride")
-    parent = target.parent
-    while not parent is None:
-        print(parent.word)
-        parent = parent.parent
+    # n = a_start.get_neighbors((word="pride"))
+    target = a_start.find_path("pokemon", "digimon")
+    # parent = target.parent
+    # while not parent is None:
+    #     print(parent.word)
+    #     parent = parent.parent
     # TODO: handle parents

@@ -12,6 +12,6 @@ COPY ./setup.py /code/setup.py
 COPY ./src /code/src
 RUN python /code/setup.py install
 
-COPY ./app /code/app
+COPY ./src/app /code/app
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]

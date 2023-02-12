@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import List
 import networkx as nx
+from tqdm import tqdm
 import wikipediaapi
 import spacy
 from sklearn.base import BaseEstimator
@@ -21,6 +22,7 @@ class Model():
 from sklearn.ensemble import RandomForestRegressor
 generator = WikipediaDataset(starting_node="Pokémon", hop_nb=10)
 train_set, tf = generator.create_dataset(pair_nb=10)
+# TODO: TFIDF should be learned on small neighborhood of both source & target.
 model = Model(RandomForestRegressor(n_estimators=10, max_depth=10), tf) 
 
 class Page():
@@ -42,14 +44,15 @@ class Page():
         return self.to_start + self.to_target
 
     def set_heuristic(self, target: Page):
-        common_categories = len(self.categories.intersection(target.categories))
-        all_categories = len(self.categories.union(target.categories))
-        degree_sum = self.degree + target.degree
-        degree_diff = abs(self.degree - target.degree)
-        similarity = self.doc.similarity(target.doc)
-        distance = 1 / (1e-3 + similarity)
-        percent_cat = common_categories / all_categories
-        tfidf = (model.tfidf.transform(self.summary)*model.tfidf.transform(target.summary).T).toarray()[0][0]
+        # common_categories = len(self.categories.intersection(target.categories))
+        # all_categories = len(self.categories.union(target.categories))
+        # degree_sum = self.degree + target.degree
+        # degree_diff = abs(self.degree - target.degree)
+        # similarity = self.doc.similarity(target.doc)
+        # distance = 1 / (1e-3 + similarity)
+        # percent_cat = common_categories / all_categories
+        # tfidf_matrix = model.tfidf.transform((self.summary, target.summary))
+        # tfidf = (tfidf_matrix[0]*tfidf_matrix[1].T).toarray()[0][0]
         self.to_target = 0 # model.estimator.predict([common_categories, degree_sum, degree_diff, similarity, distance, percent_cat, tfidf])
 
     def __eq__(self, __o: Page) -> bool:
@@ -77,6 +80,7 @@ class AStar():
             count += 1
             nodes = sorted(nodes) #TODO: Use a cleverer data structure.
             node = nodes.pop(0)
+            print(node.page.title)
             if node in visited_nodes: # Ignore node.
                 continue
             elif node == target_page: # Over.
@@ -84,7 +88,7 @@ class AStar():
             else:
                 visited_nodes.append(node)
                 neighbors = self.get_neighbors(node)
-                for neighbor in neighbors:
+                for neighbor in tqdm(neighbors, desc="Exploring neighbors"):
                     neighbor_node = Page(self.wiki_wiki.page(neighbor), to_start=node.to_start + 1)
                     if neighbor_node in visited_nodes:
                         continue

@@ -7,10 +7,12 @@ from sklearn.base import BaseEstimator
 import optuna
 import mlflow
 
+mlflow.set_experiment("Wikipedia")
+
 generator = WikipediaDataset(hop_nb=200)
     
-train_set = generator.create_dataset(pair_nb=5000)
-test_set = generator.create_dataset(pair_nb=500)
+train_set, _ = generator.create_dataset(pair_nb=5000)
+test_set, _ = generator.create_dataset(pair_nb=500)
 
 X_train = train_set[["common_cat", "degree_sum", "degree_diff", "similarity", "distance", "percent_cat", "tfidf"]]
 y_train = train_set['length']

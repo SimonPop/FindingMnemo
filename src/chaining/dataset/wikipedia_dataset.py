@@ -4,10 +4,6 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import spacy
-import random
-from numpy import dot
-from numpy.linalg import norm
-from math import log
 from sklearn.feature_extraction.text import TfidfVectorizer
 from dataclasses import dataclass
 
@@ -64,14 +60,15 @@ class WikipediaDataset():
         categories = [self.node2page[x].categories for x in tqdm(samples)]
         docs = [x for x in self.nlp.pipe(samples)]
         pairs = np.array(range(len(samples))).reshape(2, -1) 
-        tfidf = TfidfVectorizer().fit_transform(summaries)
+        tfidf = TfidfVectorizer()
+        tfidf_matrix = tfidf.fit_transform(summaries)
         rows = []
 
         for src, tgt in tqdm(zip(*pairs)):
-            row = self.compute_pair_features(src, tgt, docs, categories, samples, tfidf)
+            row = self.compute_pair_features(src, tgt, docs, categories, samples, tfidf_matrix)
             rows.append(row)
 
-        return pd.DataFrame(rows)
+        return pd.DataFrame(rows), tfidf
 
     def compute_pair_features(self, src: int, tgt: int, docs, categories, samples, tfidf) -> PairRow:
         length = nx.shortest_path_length(self.graph, samples[src], samples[tgt])

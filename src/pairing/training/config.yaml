@@ -1,6 +1,6 @@
 experiment_name: "base_line_model"
 max_epochs: 100
-n_trials: 5
+n_trials: 10
 seed: 0
 loss_type: "triplet"
 best_pairs_dataset: "C:\\Users\\simon\\Projets\\FindingMnemo\\src\\pairing\\dataset\\pairing\\best_pairs.csv"

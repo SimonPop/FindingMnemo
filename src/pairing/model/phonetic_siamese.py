@@ -16,12 +16,18 @@ class PhoneticSiamese(pl.LightningModule):
         nhead: int = 1,
         dim_feedforward: int = 16,
         loss_type: LossType = LossType.Pair,
-        batch_size: int = 8
+        batch_size: int = 8,
+        margin: float = 0.2,
+        weight_decay: float = 1e-4,
+        lr: float = 1e-2
     ):
         super().__init__()
 
         self.loss_type = loss_type
         self.batch_size = batch_size
+
+        self.weight_decay = weight_decay
+        self.lr = lr
 
         self.padding = padding
         self.embedding_dim = embedding_dim
@@ -39,7 +45,7 @@ class PhoneticSiamese(pl.LightningModule):
         self.p_enc_1d_model = PositionalEncoding1D(self.embedding_dim)
         self.p_enc_1d_model_sum = Summer(self.p_enc_1d_model)
 
-        self.triplet_loss = torch.nn.TripletMarginLoss(margin=1.0, p=2)
+        self.triplet_loss = torch.nn.TripletMarginLoss(margin=margin, p=2)
 
         self.save_hyperparameters()
 
@@ -127,5 +133,5 @@ class PhoneticSiamese(pl.LightningModule):
         )
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=1e-2, weight_decay=1e-4)
+        optimizer = optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         return optimizer

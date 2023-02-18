@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd 
 import torch
 
-from pairing.model.phonetic_siamese import PhoneticSiamese
+from src.pairing.model.phonetic_siamese import PhoneticSiamese
 
 class Indexer(Executor):
     model: PhoneticSiamese
@@ -23,7 +23,7 @@ class Indexer(Executor):
 
     def load_documents(self) -> DocumentArray:
         dataframe = pd.read_csv(Path(__file__).parent.parent / 'dataset' / 'pairing' / 'english.csv')
-        words = dataframe[['word', 'ipa']].astype(str).head(50)   
+        words = dataframe[['word', 'ipa']].astype(str) # .head(50)   
 
         local_da = DocumentArray([Document(text=w['word'], ipa=w['ipa']) for _, w in words.iterrows()])
         def embed(da: DocumentArray) -> DocumentArray:

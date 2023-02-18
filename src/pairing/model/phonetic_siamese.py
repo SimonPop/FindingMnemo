@@ -34,7 +34,9 @@ class PhoneticSiamese(pl.LightningModule):
         self.vocabulary = {w: i for i, w in enumerate(UNICODE_TO_IPA.keys())}
         self.embedding = torch.nn.Embedding(
             num_embeddings=len(self.vocabulary) + 1, embedding_dim=embedding_dim
-        ).cuda()
+        )
+        if torch.cuda.is_available():
+            self.embedding = self.embedding.cuda()
         self.encoder = nn.TransformerEncoderLayer(
             d_model=embedding_dim,
             nhead=nhead,
@@ -57,7 +59,9 @@ class PhoneticSiamese(pl.LightningModule):
     def encode(self, x: List[str]) -> List[torch.tensor]:
         x = [torch.tensor([self.vocabulary[l] for l in w if l in self.vocabulary]) for w in x]
         x = [self.pad(t) for t in x]
-        x = torch.stack(x).long().cuda(0)
+        x = torch.stack(x).long()
+        if torch.cuda.is_available():
+            x = x.cuda(0)
         x = self.embedding(x)
         x = self.p_enc_1d_model_sum(x)
         x = self.encoder(x)

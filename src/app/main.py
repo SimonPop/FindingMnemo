@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from jina import DocumentArray, Document
 
-from text_generation.generation.text_generator import TextGenerator
+from src.text_generation.generation.text_generator import TextGenerator
 from src.pairing.search.engine import Engine
 from src.pairing.search.indexer import Indexer
 
@@ -22,8 +22,9 @@ def read_root():
 
 @app.get("/index/")
 def index_items():
-    indexer.index()
+    documents = indexer.index()
     engine.load_documents()
+    return f"Uploaded {len(documents)} documents."
 
 @app.get("/search/{word}/")
 def search(word: str):
@@ -31,6 +32,6 @@ def search(word: str):
     input = DocumentArray(Document(text=word, ipa=ipa))
     return engine.search(input).to_dict()
 
-@app.get("/generate/")
-def generate(words: List[str]):
-    return generator.generate(words)
+@app.get("/generate/{w1}/{w2}")
+def generate(w1: str, w2: str):
+    return generator.generate((w1, w2))

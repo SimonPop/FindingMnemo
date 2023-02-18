@@ -32,13 +32,13 @@ def display_candidates(response, translation, pinyin):
             return ":blowfish:"
     emojis = [score2emoji(x) for x in scores]
     for index, (match, emoji) in enumerate(zip(matches, emojis)):
-        generation = requests.get(url=f"http://localhost:8000/generate/{translation}/{match}/").json()
+        generation = requests.get(url=f"http://fastapi:8000/generate/{translation}/{match}/").json()
         st.write(f"{emoji} - {match} - {generation}")
     st.info(':tropical_fish: - Definitely Mnemo / :fish: - Not exactly Mnemo / :blowfish: - Barely Mnemo')
 
 if chinese_word:
     pinyin = hanzi.to_pinyin(chinese_word)
-    response = requests.get(url=f"http://localhost:8000/search/{pinyin}/").json()
+    response = requests.get(url=f"http://fastapi:8000/search/{pinyin}/").json()
     translation = d.lookup(chinese_word).definition_entries[0].definitions[0].split('(')[0]
     st.write(f"pinyin: {pinyin}")
     st.write(f"translation: {translation}")

@@ -9,6 +9,12 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0
     ports:     
       - "8000:8000"
+  streamlit:
+    build: src/ui
+    ports:
+      - 8501:8501
+    depends_on:
+      - fastapi
 networks:
   counter-net:
     driver: bridge

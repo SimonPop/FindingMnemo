@@ -1,2 +1,2 @@
-from .pair import Pair
+from .pair import Pair, InterlanguagePair
 from .pairing import PairingMaker

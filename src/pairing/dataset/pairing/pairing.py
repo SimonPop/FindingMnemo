@@ -4,7 +4,7 @@ import pandas as pd
 from typing import List
 from tqdm import tqdm
 from pathlib import Path
-from src.pairing.dataset.pairing import Pair
+from src.pairing.dataset.pairing import Pair, InterlanguagePair
 
 class PairingMaker:
     """
@@ -70,63 +70,75 @@ class PairingMaker:
         """
         best_pairs, worst_pairs = self.load_pairs()
 
-        english_df = self.load_english_data()
-        chinese_df = self.load_chinese_data(best_pairs)
+        english_df = self.load_english_data(best_pairs).dropna()[["word", "ipa", "custom_alphabet_5", "custom_alphabet_10", "custom_alphabet_15", "custom_alphabet_20"]]
+        chinese_df = self.load_chinese_data(best_pairs).dropna().rename(columns={"pinyin": "word"})[["word", "ipa", "custom_alphabet_5", "custom_alphabet_10", "custom_alphabet_15", "custom_alphabet_20"]]
 
-        for i, (_, chinese_row) in enumerate(chinese_df.iterrows()):
-            best_pair, worst_pair = self.find_pair_from_chinese(chinese_row, english_df)
+        all_df = pd.concat((english_df, chinese_df)).sample(frac=1)
 
-            best_pairs = pd.concat((best_pairs, pd.DataFrame([best_pair.dict()])))
-            worst_pairs = pd.concat((worst_pairs, pd.DataFrame([worst_pair.dict()])))
+        for i, (_, row) in enumerate(all_df.iterrows()):
+            bests, worsts = self.find_pair(row, english_df)
+            bests = pd.DataFrame([pair.dict() for pair in bests])
+            worsts = pd.DataFrame([pair.dict() for pair in worsts])
+
+            best_pairs = pd.concat((best_pairs, pd.DataFrame(bests)))
+            worst_pairs = pd.concat((worst_pairs, pd.DataFrame(worsts)))
+
+            bests, worsts = self.find_pair(row, chinese_df)
+            bests = pd.DataFrame([pair.dict() for pair in bests])
+            worsts = pd.DataFrame([pair.dict() for pair in worsts])
+
+            best_pairs = pd.concat((best_pairs, pd.DataFrame(bests)))
+            worst_pairs = pd.concat((worst_pairs, pd.DataFrame(worsts)))
 
             if i % saving_frequency == 0:
                 self.save_data(best_pairs, worst_pairs)
 
-    def find_pair_from_chinese(self, chinese_row, english_df: pd.DataFrame) -> List[Pair]:
-        """Find the closest and farthest sounding english word from the given chinese word. 
+    def find_pair(self, row, df: pd.DataFrame) -> List[Pair]:
 
-        Args:
-            chinese_row (_type_): Dataframe row containing chinese phonetic information.
-            english_df (pd.DataFrame): English dataframe containing the whole of available english vocabulary.
-
-        Returns:
-            List[Pair]: Best and Worst pair found for the given chinese term.
-        """
         desc = "Finding closest word for {}"
         distances = [
-            self.custom_distance(chinese_row, english_row)
-            for _, english_row in tqdm(
-                english_df.iterrows(), desc=desc.format(chinese_row["pinyin"])
+            self.custom_distance(row, df_row)
+            for _, df_row in tqdm(
+                df.iterrows() # , desc=desc.format(str(row))
             )
         ]
-        best_index = np.argmin(distances)
-        best_row = english_df.iloc[best_index]
-        best_dst = distances[best_index]
 
-        worst_index = np.argmin([1 + 1e-3 if d < min(max(distances), best_dst + self.margin) else d for d in distances])
-        worst_row = english_df.iloc[worst_index]
-        worst_dst = distances[worst_index]
+        sorted_indexes = np.argsort(distances)
+        limit_worst_index = sorted_indexes[-11]
+        limit_best_index = sorted_indexes[10]
+        distance_threshold = min(distances[limit_worst_index], distances[limit_best_index] + self.margin)
+        offset = len([d for d in distances if d < distance_threshold])
+        best_indexes = sorted_indexes[range(10)]
+        worst_indexes = sorted_indexes[range(offset, offset+10)]
+        # TODO: could make some combinations. 
 
-        best_pair = {
-            "chinese_hanzi": chinese_row["hanzi"],
-            "chinese_pinyin": chinese_row["pinyin"],
-            "chinese_ipa": chinese_row["ipa"],
-            "english_word": best_row["word"],
-            "english_ipa": best_row["ipa"],
-            "distance": best_dst,
-        }
+        best_pairs = []
+        worst_pairs = []
 
-        worst_pair = {
-            "chinese_hanzi": chinese_row["hanzi"],
-            "chinese_pinyin": chinese_row["pinyin"],
-            "chinese_ipa": chinese_row["ipa"],
-            "english_word": worst_row["word"],
-            "english_ipa": worst_row["ipa"],
-            "distance": worst_dst,
-        }
+        for best_index, worst_index in zip(best_indexes, worst_indexes):
+            best_row = df.iloc[best_index]
+            worst_row = df.iloc[worst_index]
+            best_dst = distances[best_index]
+            worst_dst = distances[worst_index]
 
-        return Pair(**best_pair), Pair(**worst_pair)
-    
+            best_pairs.append({
+                "word_a": row["word"],
+                "word_b": best_row["word"],
+                "ipa_a": row["ipa"],
+                "ipa_b": best_row["ipa"],
+                "distance": best_dst,
+            })
+
+            worst_pairs.append({
+                "word_a": row["word"],
+                "word_b": worst_row["word"],
+                "ipa_a": row["ipa"],
+                "ipa_b": worst_row["ipa"],
+                "distance": worst_dst,
+            })
+
+        return [Pair(**best_pair) for best_pair in best_pairs], [Pair(**worst_pair) for worst_pair in worst_pairs]
+
     def save_data(self, best_pairs: List[dict], worst_pairs: List[dict]) -> None:
         """Saves best and worst pairs in a csv file.
 
@@ -151,18 +163,17 @@ class PairingMaker:
             worst_pairs = pd.read_csv(self.worst_pairs_path)
         except:
             col_names = [
-                "chinese_hanzi",
-                "chinese_pinyin",
-                "chinese_phonetic",
-                "english_word",
-                "english_phonetic",
-                "distance",
+                "word_a",
+                "word_b",
+                "ipa_a",
+                "ipa_b",
+                "distance"
             ]
             best_pairs = pd.DataFrame(columns=col_names)
             worst_pairs = pd.DataFrame(columns=col_names)
         return best_pairs, worst_pairs
 
-    def load_english_data(self) -> pd.DataFrame:
+    def load_english_data(self, pair_df: pd.DataFrame) -> pd.DataFrame:
         """Loads the chinese vocabulary dataframe.
 
         Returns:
@@ -170,6 +181,8 @@ class PairingMaker:
         """
         print("Loading english corpus.")
         english_corpus = pd.read_csv(self.path / "english.csv")
+        if not pair_df is None:
+            english_corpus = english_corpus[~english_corpus["word"].isin(pair_df["word_a"])]
         return english_corpus[english_corpus["valid_ipa"] == True]
 
     def load_chinese_data(self, pair_df: pd.DataFrame) -> pd.DataFrame:
@@ -185,9 +198,9 @@ class PairingMaker:
         hsk_df = pd.read_csv(self.path / "chinese.csv")
         hsk_df = hsk_df[hsk_df["valid_ipa"] == True]
         if not pair_df is None:
-            hsk_df = hsk_df[~hsk_df["hanzi"].isin(pair_df["chinese_hanzi"])]
+            hsk_df = hsk_df[~hsk_df["hanzi"].isin(pair_df["word_a"])]
         return hsk_df
 
 
 if __name__ == "__main__":
-    PairingMaker().make_pairs()
+    PairingMaker(margin=0.2).make_pairs()

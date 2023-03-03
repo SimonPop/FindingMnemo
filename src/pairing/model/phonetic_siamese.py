@@ -19,9 +19,16 @@ class PhoneticSiamese(pl.LightningModule):
         batch_size: int = 8,
         margin: float = 0.2,
         weight_decay: float = 1e-4,
-        lr: float = 1e-2
+        lr: float = 1e-2,
+        lambda_triplet: float = 0.5,
+        lambda_pos: float = 0.25,
+        lambda_neg: float = 0.25,
     ):
         super().__init__()
+
+        self.lambda_triplet = lambda_triplet
+        self.lambda_pos = lambda_pos
+        self.lambda_neg = lambda_neg
 
         self.loss_type = loss_type
         self.batch_size = batch_size
@@ -42,6 +49,7 @@ class PhoneticSiamese(pl.LightningModule):
             nhead=nhead,
             dropout=dropout,
             dim_feedforward=dim_feedforward,
+            batch_first=True
         )
         self.cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         self.p_enc_1d_model = PositionalEncoding1D(self.embedding_dim)
@@ -107,8 +115,10 @@ class PhoneticSiamese(pl.LightningModule):
             return self._step_triplet(batch)
         elif self.loss_type == LossType.Pair:
             return self._step_mse(batch)
+        elif self.loss_type == LossType.Mixed:
+            return self._step_mixed(batch)
         else:
-            raise ValueError('Unknown loss_type passed: {}. Please choose among ["pair", "triplet"].'.format(self.loss_type))
+            raise ValueError('Unknown loss_type passed: {}. Please choose among ["pair", "triplet", "mixed"].'.format(self.loss_type))
 
     def _step_mse(self, batch):
         chinese_match = batch["chinese_phonetic"]
@@ -126,8 +136,29 @@ class PhoneticSiamese(pl.LightningModule):
 
         anchor_embedding = self.encode(anchor_match)
         positive_embedding = self.encode(positive_match)
-        neegative_embedding = self.encode(negative_match)
-        loss = self.triplet_loss(anchor_embedding, positive_embedding, neegative_embedding)
+        negative_embedding = self.encode(negative_match)
+        loss = self.triplet_loss(anchor_embedding, positive_embedding, negative_embedding)
+        return loss
+    
+    def  _step_mixed(self, batch):
+        anchor_match = batch["anchor_phonetic"]
+        positive_match = batch["similar_phonetic"]
+        negative_match = batch["distant_phonetic"]
+
+        positive_distance = batch["similar_distance"].float()
+        negative_distance = batch["distant_distance"].float()
+
+        anchor_embedding = self.encode(anchor_match)
+        positive_embedding = self.encode(positive_match)
+        negative_embedding = self.encode(negative_match)
+
+        positive_distance_hat = torch.sqrt(torch.sum((anchor_embedding-positive_embedding)**2, dim=1)) # torch.cdist(anchor_embedding, positive_embedding, p=2)
+        negative_distance_hat = torch.sqrt(torch.sum((anchor_embedding-negative_embedding)**2, dim=1)) # torch.cdist(anchor_embedding, negative_embedding, p=2)
+
+        loss_mse_positive = nn.functional.mse_loss(positive_distance_hat, positive_distance)
+        loss_mse_negative = nn.functional.mse_loss(negative_distance_hat, negative_distance)
+
+        loss = self.lambda_triplet*self.triplet_loss(anchor_embedding, positive_embedding, negative_embedding) + self.lambda_pos*loss_mse_positive + self.lambda_neg*loss_mse_negative
         return loss
 
 

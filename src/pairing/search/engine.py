@@ -19,7 +19,7 @@ class Engine(Executor):
     def search(self, docs: DocumentArray, **kwargs) -> Union[DocumentArray, Dict, None]:
         x = docs[:,'tags__ipa']
         docs.embeddings = self.model.encode(x).detach()
-        docs.match(self.da, metric='cosine', limit=self.n_limit)
+        docs.match(self.da, metric='euclidean', limit=self.n_limit)
         return docs
 
     def load_model(self) -> PhoneticSiamese:
@@ -38,7 +38,7 @@ class Engine(Executor):
             config={
                 'n_dim': self.model.embedding_dim,
                 'index_name': 'english_words',
-                'distance': 'COSINE',
+                'distance': 'L2',
                 'host': 'redis',
                 'port': '6379',
             }

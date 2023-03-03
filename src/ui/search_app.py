@@ -22,7 +22,7 @@ chinese_word = st.text_input("Mandarin word:") # 相机
 
 def display_candidates(response, translation, pinyin):
     matches = [match["text"] for x in response for match in x['matches'] ]
-    scores = [match["scores"]["cosine"]["value"] for x in response for match in x['matches'] ]
+    scores = [match["scores"]["euclidean"]["value"] for x in response for match in x['matches'] ]
     def score2emoji(score: float):
         if score < 0.01:
             return ":tropical_fish:"

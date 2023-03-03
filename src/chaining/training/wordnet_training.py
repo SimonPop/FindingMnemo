@@ -36,7 +36,16 @@ if __name__ == "__main__":
     sample = next(iter(loader))
     print(sample)
     words = [dataset.id2node[str(i)] for i in range(len(dataset.id2node))]
-    model = DistanceEstimator(words)
-    print(model(dataset.data, sample))
+
+    words = [x.split('.')[0].replace('_', ' ') for x in words]
+
+    import gensim.downloader
+    glove_vectors = gensim.downloader.load(f'glove-wiki-gigaword-{50}')
+    print(glove_vectors['addis ababa'])
+
+    # print(words)
+
+    # model = DistanceEstimator(words)
+    # print(model(dataset.data, sample))
 
     # TODO: Create an embedding dict for words contained in wordnet

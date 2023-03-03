@@ -26,7 +26,7 @@ class Node():
 
 class AStar():
     def __init__(self):
-        self.jump_limit = 100
+        self.jump_limit = 10
         self.handler = DatabaseHandler("bolt://localhost:7687", "simon", "wiktionary")
         self.temporary_graph: nx.Graph = self.handler.load_graph()
 
@@ -36,7 +36,10 @@ class AStar():
 
         nodes.append(Node(start))
 
-        while len(nodes) > 0:
+        count = 0
+
+        while len(nodes) > 0 and count < self.jump_limit:
+            count += 1
             node = nodes.pop() # TODO: get the minimum f.
             if node in visited_nodes: # Ignore node.
                 continue
@@ -53,6 +56,7 @@ class AStar():
                         for n in nodes:
                             if n == neighbor_node:
                                 n.parent = node
+                                # n.to_start = min(n.to_start, node.to_start + 1)
                     elif EMBEDDING_HEURISTIC.word_available(neighbor_node.word):
                         neighbor_node.set_heuristic(target)
                         neighbor_node.parent = node

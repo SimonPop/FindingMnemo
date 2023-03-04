@@ -31,7 +31,7 @@ def get_dataset() -> Dataset:
 
 dataset = get_dataset()
 train_set, val_set, test_set = torch.utils.data.random_split(
-    dataset, [len(dataset) - 200, 100, 100]
+    dataset, [len(dataset) - 1200, 600, 600]
 )
 
 
@@ -70,10 +70,8 @@ def objective(trial):
 
         test_loss = test_model(model, instance["test_dataloader"], trainer)[0]["test_loss"]
 
-        mlflow.pytorch.log_model(model, "weights")
-        # mlflow.log_params(trial.params)
-        # mlflow.log_metric("final_test_loss", test_loss)
-        # mlflow.log_param("loss_type", CONFIG.loss_type)
+        torch.save(model.state_dict(), "model_dict")
+        mlflow.log_artifact("model_dict", "model_dict")
 
     return test_loss
 
@@ -97,7 +95,6 @@ def instanciate(kwargs):
         weight_decay=kwargs["weight_decay"],
         lr=kwargs["lr"],
     )
-    # if torch.cuda.is_available():
     return {
         "train_dataloader": train_dataloader,
         "validation_dataloader": validation_dataloader,
@@ -121,5 +118,3 @@ if __name__ == "__main__":
     study = optuna.create_study()
     study.optimize(objective, n_trials=CONFIG.n_trials)
     study.best_params
-    # TODO use profiling.
-    # TODO: add regularization

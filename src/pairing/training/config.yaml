@@ -1,5 +1,5 @@
 experiment_name: "base_line_model"
-max_epochs: 100
+max_epochs: 25
 n_trials: 10
 seed: 0
 loss_type: "triplet"

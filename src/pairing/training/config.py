@@ -6,6 +6,7 @@ from enum import Enum
 class LossType(Enum):
     Triplet = "triplet"
     Pair = "pair"
+    Mixed = "mixed"
 
 class ModelType(Enum):
     PhoneticSiamese = "phonetic_siamese"

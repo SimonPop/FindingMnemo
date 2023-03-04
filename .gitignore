@@ -10,3 +10,9 @@ data/
 
 **.egg-info
 **__pycache__
+
+
+**.ipynb
+!notebooks/phonetic_embedding.ipynb
+!notebooks/phonetic_training.ipynb
+!notebooks/explore_a_star.ipynb

@@ -5,7 +5,6 @@ from pathlib import Path
 
 class PhoneticTripletDataset(Dataset):
     def __init__(self, best_pairs_path: str, worst_pairs_path: str):
-        self.path = Path(__file__).parent
         self.best_pairs = pd.read_csv(best_pairs_path).dropna(
             subset=["ipa_a", "ipa_b", "distance"]
         )

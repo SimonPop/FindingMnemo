@@ -5,6 +5,14 @@
 <b>Less of a goldfish memory</b>
 </p>
 
+<p align="center">
+<a href="https://github.com/SimonPop/FindingMnemo/"><img alt="Project Version" src="https://img.shields.io/badge/version-0.0.1-blue"></a>
+<a href="https://www.python.org"><img alt="Python Version 3.8" src="https://img.shields.io/badge/Python-3.8-blue.svg?style=flat&logo=python&logoColor=white"></a>
+<a href="https://github.com/SimonPop/FindingMnemo/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
+<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+<a href="https://streamlit.io"><img alt="Streamlit" src="https://img.shields.io/badge/Streamlit-1.2.0-FF4B4B.svg?style=flat&logo=Streamlit&logoColor=white"></a>
+</p>
+
 
 This is a prototype for a mnemonic generator tool.
 

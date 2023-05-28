@@ -3,7 +3,7 @@ max_epochs: 5
 n_trials: 10
 seed: 0
 loss_type: "triplet"
-best_pairs_dataset: "C:\\Users\\simon\\Projets\\FindingMnemo\\src\\pairing\\dataset\\pairing\\best_pairs.csv"
-worst_pairs_dataset: "C:\\Users\\simon\\Projets\\FindingMnemo\\src\\pairing\\dataset\\pairing\\worst_pairs.csv"
+best_pairs_dataset: "file:C:\\Users\\simon\\Projets\\FindingMnemo\\finding_mnemo\\pairing\\dataset\\data\\best_pairs.csv"
+worst_pairs_dataset: "file:C:\\Users\\simon\\Projets\\FindingMnemo\\finding_mnemo\\pairing\\dataset\\data\\worst_pairs.csv"
 log_folder: "file:C:\\Users\\simon\\Projets\\FindingMnemo\\mlruns\\"
 model_type: "phonetic_siamese"

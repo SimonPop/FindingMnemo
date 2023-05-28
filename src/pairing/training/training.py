@@ -3,7 +3,6 @@ from src.pairing.dataset.phonetic_triplet_dataset import PhoneticTripletDataset
 from src.pairing.model.phonetic_siamese import PhoneticSiamese
 from src.pairing.training.config import CONFIG, LossType
 from torch.utils.data import Dataset
-from pathlib import Path
 
 from pytorch_lightning.loggers import MLFlowLogger
 from pytorch_lightning.utilities.seed import seed_everything

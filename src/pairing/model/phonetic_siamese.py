@@ -36,6 +36,8 @@ class PhoneticSiamese(pl.LightningModule):
         self.weight_decay = weight_decay
         self.lr = lr
 
+        self.nhead = nhead
+
         self.padding = padding
         self.embedding_dim = embedding_dim
         self.vocabulary = {w: i for i, w in enumerate(UNICODE_TO_IPA.keys())}
@@ -44,13 +46,14 @@ class PhoneticSiamese(pl.LightningModule):
         )
         if torch.cuda.is_available():
             self.embedding = self.embedding.cuda()
-        self.encoder = nn.TransformerEncoderLayer(
-            d_model=embedding_dim,
-            nhead=nhead,
-            dropout=dropout,
-            dim_feedforward=dim_feedforward,
-            batch_first=True
-        )
+        if self.nhead > 0:
+            self.encoder = nn.TransformerEncoderLayer(
+                d_model=embedding_dim,
+                nhead=nhead,
+                dropout=dropout,
+                dim_feedforward=dim_feedforward,
+                batch_first=True
+            )
         self.cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         self.p_enc_1d_model = PositionalEncoding1D(self.embedding_dim)
         self.p_enc_1d_model_sum = Summer(self.p_enc_1d_model)
@@ -72,7 +75,8 @@ class PhoneticSiamese(pl.LightningModule):
             x = x.cuda(0)
         x = self.embedding(x)
         x = self.p_enc_1d_model_sum(x)
-        x = self.encoder(x)
+        if self.nhead > 0:
+            x = self.encoder(x)
         x = torch.sum(x, dim=1)
         return x
 

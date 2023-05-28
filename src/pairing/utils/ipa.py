@@ -1,5 +1,6 @@
 from dragonmapper import hanzi
 
+
 def filter_chinese_ipa(ipa: str):
     from dragonmapper import transcriptions
 

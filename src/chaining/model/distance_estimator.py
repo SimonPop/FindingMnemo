@@ -1,21 +1,20 @@
+from typing import List
+
+import gensim.downloader
+import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from torch import optim, nn
-import pytorch_lightning as pl
 from positional_encodings.torch_encodings import PositionalEncoding1D, Summer
-import gensim.downloader
-from typing import List
+from torch import nn, optim
+
 
 class DistanceEstimator(pl.LightningModule):
     def __init__(
-        self,
-        embedding_dim: int = 50,
-        dim_feedforward: int = 16,
-        batch_size: int = 8
+        self, embedding_dim: int = 50, dim_feedforward: int = 16, batch_size: int = 8
     ):
         super().__init__()
-        glove_vectors = gensim.downloader.load(f'glove-wiki-gigaword-{embedding_dim}')
-        self.key_to_index = glove_vectors.key_to_index 
+        glove_vectors = gensim.downloader.load(f"glove-wiki-gigaword-{embedding_dim}")
+        self.key_to_index = glove_vectors.key_to_index
         weights = torch.FloatTensor(glove_vectors.vectors)
         self.embeddings = nn.Embedding.from_pretrained(weights)
         self.final_layer = torch.nn.Linear(embedding_dim, dim_feedforward)
@@ -35,5 +34,5 @@ class DistanceEstimator(pl.LightningModule):
 
 if __name__ == "__main__":
     estimator = DistanceEstimator()
-    sim = estimator(['dog'], ['cat'])
+    sim = estimator(["dog"], ["cat"])
     print(sim)

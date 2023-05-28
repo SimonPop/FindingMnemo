@@ -1,6 +1,8 @@
-from keytotext import pipeline
 from typing import List
-from jina import Executor, requests, DocumentArray
+
+from jina import DocumentArray, Executor, requests
+from keytotext import pipeline
+
 
 class TextGenerator(Executor):
     def __init__(self, **kwargs):
@@ -12,9 +14,9 @@ class TextGenerator(Executor):
             "no_repeat_ngram_size": 3,
             "early_stopping": True,
         }
-        self.model = pipeline('k2t-base')
+        self.model = pipeline("k2t-base")
 
-    @requests(on=['/generate'])
+    @requests(on=["/generate"])
     def generate(self, docs: List[str], **kwargs):
         # for query in docs:
         #     mnemo = [self.model([query.text, keyword], **self.config) for keyword in query.matches[:,'text']]
@@ -23,15 +25,20 @@ class TextGenerator(Executor):
         return self.model(docs, **self.config)
 
 
-from jina import Flow, Document
+from jina import Document, Flow
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    inputs = DocumentArray([Document(text='football', matches=[Document(text='Zidane')]), Document(text='bakery', matches=[Document(text='bread')])])
+    inputs = DocumentArray(
+        [
+            Document(text="football", matches=[Document(text="Zidane")]),
+            Document(text="bakery", matches=[Document(text="bread")]),
+        ]
+    )
 
-    f = Flow().add(name='TextGenerator', uses=TextGenerator)
+    f = Flow().add(name="TextGenerator", uses=TextGenerator)
     with f:
-        f.post(on='/generate', inputs=inputs, on_done=print)
+        f.post(on="/generate", inputs=inputs, on_done=print)
 
     # text_generator = TextGenerator()
     # text_generator.generate(inputs)

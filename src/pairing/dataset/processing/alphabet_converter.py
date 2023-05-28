@@ -1,46 +1,57 @@
-from .custom_phonemes import CustomPhonemes
 from pathlib import Path
+
 import pandas as pd
+import panphon.distance
 from dragonmapper import hanzi
 from eng_to_ipa import convert
-import panphon.distance
 from tqdm import tqdm
+
+from .custom_phonemes import CustomPhonemes
+
 tqdm.pandas()
 from typing import Optional
 
-class AlphabetConverter():
-    """Used for creating both english & chinese datasets containing necessary features used for pairing. 
-    """
+
+class AlphabetConverter:
+    """Used for creating both english & chinese datasets containing necessary features used for pairing."""
+
     def __init__(self):
         self.dst = panphon.distance.Distance()
         self.custom_phonemes = CustomPhonemes()
 
     def process_english_corpus(self, corpus_path: Path) -> pd.DataFrame:
-        """Processes english vocabulary and fills a DataFrame containing all 
+        """Processes english vocabulary and fills a DataFrame containing all
         pre-computed phonetic information needed for efficient pairing.
 
         Returns:
             pd.DataFrame: English vocabulary phonetic dataframe.
         """
         # Load raw data
-        raw_df = pd.read_csv(
-            corpus_path, sep=" ", header=None
-        ).rename(columns={0: "word", 1: "occurence"})
+        raw_df = pd.read_csv(corpus_path, sep=" ", header=None).rename(
+            columns={0: "word", 1: "occurence"}
+        )
         # Filter out values too low
         filter_occ = 5000
         raw_df = raw_df[raw_df["occurence"] > filter_occ]
         # Filter out words too short
         # raw_df = raw_df[raw_df['word'].str.len() > 2]
         # Create IPA
-        raw_df["ipa"] = raw_df["word"].astype(str).progress_apply(AlphabetConverter.convert_eng_to_ipa)
+        raw_df["ipa"] = (
+            raw_df["word"]
+            .astype(str)
+            .progress_apply(AlphabetConverter.convert_eng_to_ipa)
+        )
         raw_df["valid_ipa"] = ~raw_df["ipa"].str.contains("*", regex=False)
         raw_df["dolgo"] = raw_df["ipa"].apply(self.dst.map_to_dolgo_prime)
         for level in [5, 10, 15, 20]:
-            raw_df["custom_alphabet_{}".format(level)] = raw_df.progress_apply(lambda x: self.convert_to_custom(x["ipa"], x["valid_ipa"], level=level), axis=1)
+            raw_df["custom_alphabet_{}".format(level)] = raw_df.progress_apply(
+                lambda x: self.convert_to_custom(x["ipa"], x["valid_ipa"], level=level),
+                axis=1,
+            )
         return raw_df
 
     def process_mandarin_corpus(self, corpus_path: Path) -> pd.DataFrame:
-        """Processes chinese vocabulary and fills a DataFrame containing all 
+        """Processes chinese vocabulary and fills a DataFrame containing all
         pre-computed phonetic information needed for efficient pairing.
 
         Returns:
@@ -61,10 +72,13 @@ class AlphabetConverter():
         raw_df["valid_ipa"] = ~raw_df["ipa"].str.contains("*", regex=False)
         raw_df["dolgo"] = raw_df["ipa"].apply(self.dst.map_to_dolgo_prime)
         for level in [5, 10, 15, 20]:
-            raw_df["custom_alphabet_{}".format(level)] = raw_df.progress_apply(lambda x: self.convert_to_custom(x["ipa"], x["valid_ipa"], level=level), axis=1)
+            raw_df["custom_alphabet_{}".format(level)] = raw_df.progress_apply(
+                lambda x: self.convert_to_custom(x["ipa"], x["valid_ipa"], level=level),
+                axis=1,
+            )
         return raw_df
 
-    def convert_to_custom(self, word: str, valid: bool, level: int) -> Optional[str]: 
+    def convert_to_custom(self, word: str, valid: bool, level: int) -> Optional[str]:
         if valid:
             return self.custom_phonemes.convert(word, level)
         else:

@@ -1,11 +1,14 @@
-from ipapy import UNICODE_TO_IPA
+from typing import List
+
+import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from torch import optim, nn
-import pytorch_lightning as pl
-from typing import List
+from ipapy import UNICODE_TO_IPA
 from positional_encodings.torch_encodings import PositionalEncoding1D, Summer
+from torch import nn, optim
+
 from src.pairing.training.config import LossType
+
 
 class PhoneticSiamese(pl.LightningModule):
     def __init__(
@@ -52,7 +55,7 @@ class PhoneticSiamese(pl.LightningModule):
                 nhead=nhead,
                 dropout=dropout,
                 dim_feedforward=dim_feedforward,
-                batch_first=True
+                batch_first=True,
             )
         self.cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         self.p_enc_1d_model = PositionalEncoding1D(self.embedding_dim)
@@ -68,7 +71,10 @@ class PhoneticSiamese(pl.LightningModule):
         return self.cos(a, b)
 
     def encode(self, x: List[str]) -> List[torch.tensor]:
-        x = [torch.tensor([self.vocabulary[l] for l in w if l in self.vocabulary]) for w in x]
+        x = [
+            torch.tensor([self.vocabulary[l] for l in w if l in self.vocabulary])
+            for w in x
+        ]
         x = [self.pad(t) for t in x]
         x = torch.stack(x).long()
         if torch.cuda.is_available():
@@ -89,7 +95,7 @@ class PhoneticSiamese(pl.LightningModule):
             on_epoch=True,
             prog_bar=True,
             logger=True,
-            batch_size=self.batch_size
+            batch_size=self.batch_size,
         )
         return loss
 
@@ -102,15 +108,20 @@ class PhoneticSiamese(pl.LightningModule):
             on_epoch=True,
             prog_bar=True,
             logger=True,
-            batch_size=self.batch_size
+            batch_size=self.batch_size,
         )
         return loss
 
     def test_step(self, batch, batch_idx):
         loss = self._step(batch)
         self.log(
-            "test_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True,
-            batch_size=self.batch_size
+            "test_loss",
+            loss,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+            logger=True,
+            batch_size=self.batch_size,
         )
         return loss
 
@@ -122,7 +133,11 @@ class PhoneticSiamese(pl.LightningModule):
         elif self.loss_type == LossType.Mixed:
             return self._step_mixed(batch)
         else:
-            raise ValueError('Unknown loss_type passed: {}. Please choose among ["pair", "triplet", "mixed"].'.format(self.loss_type))
+            raise ValueError(
+                'Unknown loss_type passed: {}. Please choose among ["pair", "triplet", "mixed"].'.format(
+                    self.loss_type
+                )
+            )
 
     def _step_mse(self, batch):
         chinese_match = batch["chinese_phonetic"]
@@ -133,7 +148,7 @@ class PhoneticSiamese(pl.LightningModule):
         loss = nn.functional.mse_loss(y_hat, similarity)
         return loss
 
-    def  _step_triplet(self, batch):
+    def _step_triplet(self, batch):
         anchor_match = batch["anchor_phonetic"]
         positive_match = batch["similar_phonetic"]
         negative_match = batch["distant_phonetic"]
@@ -141,10 +156,12 @@ class PhoneticSiamese(pl.LightningModule):
         anchor_embedding = self.encode(anchor_match)
         positive_embedding = self.encode(positive_match)
         negative_embedding = self.encode(negative_match)
-        loss = self.triplet_loss(anchor_embedding, positive_embedding, negative_embedding)
+        loss = self.triplet_loss(
+            anchor_embedding, positive_embedding, negative_embedding
+        )
         return loss
-    
-    def  _step_mixed(self, batch):
+
+    def _step_mixed(self, batch):
         anchor_match = batch["anchor_phonetic"]
         positive_match = batch["similar_phonetic"]
         negative_match = batch["distant_phonetic"]
@@ -156,15 +173,29 @@ class PhoneticSiamese(pl.LightningModule):
         positive_embedding = self.encode(positive_match)
         negative_embedding = self.encode(negative_match)
 
-        positive_distance_hat = torch.sqrt(torch.sum((anchor_embedding-positive_embedding)**2, dim=1)) # torch.cdist(anchor_embedding, positive_embedding, p=2)
-        negative_distance_hat = torch.sqrt(torch.sum((anchor_embedding-negative_embedding)**2, dim=1)) # torch.cdist(anchor_embedding, negative_embedding, p=2)
+        positive_distance_hat = torch.sqrt(
+            torch.sum((anchor_embedding - positive_embedding) ** 2, dim=1)
+        )  # torch.cdist(anchor_embedding, positive_embedding, p=2)
+        negative_distance_hat = torch.sqrt(
+            torch.sum((anchor_embedding - negative_embedding) ** 2, dim=1)
+        )  # torch.cdist(anchor_embedding, negative_embedding, p=2)
 
-        loss_mse_positive = nn.functional.mse_loss(positive_distance_hat, positive_distance)
-        loss_mse_negative = nn.functional.mse_loss(negative_distance_hat, negative_distance)
+        loss_mse_positive = nn.functional.mse_loss(
+            positive_distance_hat, positive_distance
+        )
+        loss_mse_negative = nn.functional.mse_loss(
+            negative_distance_hat, negative_distance
+        )
 
-        loss = self.lambda_triplet*self.triplet_loss(anchor_embedding, positive_embedding, negative_embedding) + self.lambda_pos*loss_mse_positive + self.lambda_neg*loss_mse_negative
+        loss = (
+            self.lambda_triplet
+            * self.triplet_loss(
+                anchor_embedding, positive_embedding, negative_embedding
+            )
+            + self.lambda_pos * loss_mse_positive
+            + self.lambda_neg * loss_mse_negative
+        )
         return loss
-
 
     def pad(self, tensor):
         return nn.functional.pad(
@@ -172,5 +203,7 @@ class PhoneticSiamese(pl.LightningModule):
         )
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        optimizer = optim.Adam(
+            self.parameters(), lr=self.lr, weight_decay=self.weight_decay
+        )
         return optimizer

@@ -1,11 +1,14 @@
-from ipapy import UNICODE_TO_IPA
+from typing import List
+
+import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from torch import optim, nn
-import pytorch_lightning as pl
-from typing import List
+from ipapy import UNICODE_TO_IPA
 from positional_encodings.torch_encodings import PositionalEncoding1D, Summer
+from torch import nn, optim
+
 from src.pairing.training.config import LossType
+
 
 class NaiveBaseline(pl.LightningModule):
     def __init__(
@@ -16,7 +19,7 @@ class NaiveBaseline(pl.LightningModule):
         nhead: int = 1,
         dim_feedforward: int = 16,
         loss_type: LossType = LossType.Pair,
-        batch_size: int = 8
+        batch_size: int = 8,
     ):
         super().__init__()
 
@@ -40,7 +43,10 @@ class NaiveBaseline(pl.LightningModule):
         return self.cos(a, b)
 
     def encode(self, x: List[str]) -> List[torch.tensor]:
-        x = [torch.tensor([self.vocabulary[l] for l in w if l in self.vocabulary]) for w in x]
+        x = [
+            torch.tensor([self.vocabulary[l] for l in w if l in self.vocabulary])
+            for w in x
+        ]
         x = [self.pad(t) for t in x]
         x = torch.stack(x).long()
         x = self.embedding(x)
@@ -56,7 +62,7 @@ class NaiveBaseline(pl.LightningModule):
             on_epoch=True,
             prog_bar=True,
             logger=True,
-            batch_size=self.batch_size
+            batch_size=self.batch_size,
         )
         return loss
 
@@ -69,15 +75,20 @@ class NaiveBaseline(pl.LightningModule):
             on_epoch=True,
             prog_bar=True,
             logger=True,
-            batch_size=self.batch_size
+            batch_size=self.batch_size,
         )
         return loss
 
     def test_step(self, batch, batch_idx):
         loss = self._step(batch)
         self.log(
-            "test_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True,
-            batch_size=self.batch_size
+            "test_loss",
+            loss,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+            logger=True,
+            batch_size=self.batch_size,
         )
         return loss
 
@@ -87,7 +98,11 @@ class NaiveBaseline(pl.LightningModule):
         elif self.loss_type == LossType.Pair:
             return self._step_mse(batch)
         else:
-            raise ValueError('Unknown loss_type passed: {}. Please choose among ["pair", "triplet"].'.format(self.loss_type))
+            raise ValueError(
+                'Unknown loss_type passed: {}. Please choose among ["pair", "triplet"].'.format(
+                    self.loss_type
+                )
+            )
 
     def _step_mse(self, batch):
         chinese_match = batch["chinese_phonetic"]
@@ -98,7 +113,7 @@ class NaiveBaseline(pl.LightningModule):
         loss = nn.functional.mse_loss(y_hat, similarity)
         return loss
 
-    def  _step_triplet(self, batch):
+    def _step_triplet(self, batch):
         anchor_match = batch["anchor_phonetic"]
         positive_match = batch["similar_phonetic"]
         negative_match = batch["distant_phonetic"]
@@ -106,9 +121,10 @@ class NaiveBaseline(pl.LightningModule):
         anchor_embedding = self.encode(anchor_match)
         positive_embedding = self.encode(positive_match)
         neegative_embedding = self.encode(negative_match)
-        loss = self.triplet_loss(anchor_embedding, positive_embedding, neegative_embedding)
+        loss = self.triplet_loss(
+            anchor_embedding, positive_embedding, neegative_embedding
+        )
         return loss
-
 
     def pad(self, tensor):
         return nn.functional.pad(
@@ -119,6 +135,7 @@ class NaiveBaseline(pl.LightningModule):
         optimizer = optim.Adam(self.parameters(), lr=1e-2, weight_decay=1e-4)
         return optimizer
 
+
 if __name__ == "__main__":
     model = NaiveBaseline()
-    print(model.encode(['cat', 'dog']))
+    print(model.encode(["cat", "dog"]))

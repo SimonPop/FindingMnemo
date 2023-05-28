@@ -1,20 +1,19 @@
+import mlflow
+import optuna
+from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.loggers import MLFlowLogger
+from pytorch_lightning.utilities.seed import seed_everything
+from torch.utils.data import DataLoader, Dataset
+
 from src.chaining.dataset.graph_distance_dataset import GraphDistanceDataset
 from src.chaining.model.distance_estimator import DistanceEstimator
 from src.chaining.training.config import CONFIG
-from torch.utils.data import Dataset
-
-from pytorch_lightning.loggers import MLFlowLogger
-from pytorch_lightning.utilities.seed import seed_everything
-from torch.utils.data import DataLoader
-from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-
-import mlflow
-import optuna
 
 train_set = GraphDistanceDataset(mode="train")
 val_set = GraphDistanceDataset(mode="validation")
 test_set = GraphDistanceDataset(mode="test")
+
 
 def objective(trial):
     mlf_logger = MLFlowLogger(
@@ -23,7 +22,7 @@ def objective(trial):
     trainer = Trainer(
         max_epochs=CONFIG.max_epochs,
         logger=mlf_logger,
-        callbacks=[EarlyStopping(monitor="validation_loss", mode="min")]
+        callbacks=[EarlyStopping(monitor="validation_loss", mode="min")],
     )
     instance = instanciate(
         {
@@ -32,7 +31,7 @@ def objective(trial):
             "batch_size": 2 ** trial.suggest_int("batch_size", 0, 4),
             "nhead": 2 ** trial.suggest_int("nhead", 0, 3),
             "embedding_dim": 2 ** trial.suggest_int("embedding_dim", 4, 10),
-            "model": CONFIG.model_type
+            "model": CONFIG.model_type,
         }
     )
     model = fit_model(
@@ -52,6 +51,7 @@ def objective(trial):
 
     return test_loss
 
+
 def instanciate(kwargs):
     train_dataloader = DataLoader(
         train_set, batch_size=kwargs["batch_size"], shuffle=True, num_workers=4
@@ -65,7 +65,7 @@ def instanciate(kwargs):
     model = DistanceEstimator(
         embedding_dim=kwargs["embedding_dim"],
         dim_feedforward=kwargs["dim_feedforward"],
-        batch_size=kwargs["batch_size"]
+        batch_size=kwargs["batch_size"],
     )
     return {
         "train_dataloader": train_dataloader,

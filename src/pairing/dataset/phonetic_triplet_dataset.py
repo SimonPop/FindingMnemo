@@ -1,6 +1,7 @@
-from torch.utils.data import Dataset
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
+from torch.utils.data import Dataset
 
 
 class PhoneticTripletDataset(Dataset):
@@ -24,8 +25,8 @@ class PhoneticTripletDataset(Dataset):
         )
 
     def filter_same_pairs(self):
-        self.best_pairs['same'] = self.best_pairs['word_a'] == self.best_pairs['word_b']
-        to_drop_indexes = self.best_pairs[self.best_pairs['same']].index
+        self.best_pairs["same"] = self.best_pairs["word_a"] == self.best_pairs["word_b"]
+        to_drop_indexes = self.best_pairs[self.best_pairs["same"]].index
 
         self.best_pairs = self.best_pairs.drop(to_drop_indexes)
         self.worst_pairs = self.worst_pairs.drop(to_drop_indexes)
@@ -42,8 +43,10 @@ class PhoneticTripletDataset(Dataset):
         }
 
     def __len__(self):
-        if  len(self.best_pairs) != len(self.worst_pairs):
-            raise ValueError('Best & Worst pairs have different lengths. Cannot apply a triplet loss: verify alignment.')
+        if len(self.best_pairs) != len(self.worst_pairs):
+            raise ValueError(
+                "Best & Worst pairs have different lengths. Cannot apply a triplet loss: verify alignment."
+            )
         return len(self.best_pairs)
 
     def filter_data(self):

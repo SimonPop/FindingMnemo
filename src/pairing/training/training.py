@@ -1,32 +1,34 @@
+import mlflow
+import optuna
+import torch
+from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.loggers import MLFlowLogger
+from pytorch_lightning.utilities.seed import seed_everything
+from torch.utils.data import DataLoader, Dataset
+
 from src.pairing.dataset.phonetic_pair_dataset import PhoneticPairDataset
 from src.pairing.dataset.phonetic_triplet_dataset import PhoneticTripletDataset
 from src.pairing.model.phonetic_siamese import PhoneticSiamese
 from src.pairing.training.config import CONFIG, LossType
-from torch.utils.data import Dataset
 
-from pytorch_lightning.loggers import MLFlowLogger
-from pytorch_lightning.utilities.seed import seed_everything
-from torch.utils.data import DataLoader
-from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-
-import mlflow
-import torch
-import optuna
 
 def get_dataset() -> Dataset:
     """Returns a Dataset object given loss type."""
     if CONFIG.loss_type == LossType.Pair:
         dataset = PhoneticPairDataset(
-            best_pairs_path=CONFIG.best_pairs_dataset, worst_pairs_path=CONFIG.worst_pairs_dataset
+            best_pairs_path=CONFIG.best_pairs_dataset,
+            worst_pairs_path=CONFIG.worst_pairs_dataset,
         )
     elif CONFIG.loss_type == LossType.Triplet:
         dataset = PhoneticTripletDataset(
-            best_pairs_path=CONFIG.best_pairs_dataset, worst_pairs_path=CONFIG.worst_pairs_dataset
+            best_pairs_path=CONFIG.best_pairs_dataset,
+            worst_pairs_path=CONFIG.worst_pairs_dataset,
         )
     else:
-        raise ValueError(f'Unknown loss type given: {CONFIG.loss_type}')
+        raise ValueError(f"Unknown loss type given: {CONFIG.loss_type}")
     return dataset
+
 
 dataset = get_dataset()
 train_set, val_set, test_set = torch.utils.data.random_split(
@@ -42,7 +44,8 @@ def objective(trial):
         max_epochs=CONFIG.max_epochs,
         logger=mlf_logger,
         callbacks=[EarlyStopping(monitor="validation_loss", mode="min")],
-        accelerator="gpu", devices=1
+        accelerator="gpu",
+        devices=1,
     )
     instance = instanciate(
         {
@@ -53,7 +56,7 @@ def objective(trial):
             "batch_size": 2 ** trial.suggest_int("batch_size", 0, 4),
             "nhead": 2 ** trial.suggest_int("nhead", 0, 3),
             "embedding_dim": 2 ** trial.suggest_int("embedding_dim", 4, 10),
-            "model": CONFIG.model_type
+            "model": CONFIG.model_type,
         }
     )
 
@@ -67,12 +70,15 @@ def objective(trial):
             trainer,
         )
 
-        test_loss = test_model(model, instance["test_dataloader"], trainer)[0]["test_loss"]
+        test_loss = test_model(model, instance["test_dataloader"], trainer)[0][
+            "test_loss"
+        ]
 
         torch.save(model.state_dict(), "model_dict")
         mlflow.log_artifact("model_dict", "model_dict")
 
     return test_loss
+
 
 def instanciate(kwargs):
     train_dataloader = DataLoader(

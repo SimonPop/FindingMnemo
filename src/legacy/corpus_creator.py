@@ -1,5 +1,6 @@
-import wikipediaapi
 import re
+
+import wikipediaapi
 
 
 class CorpusCreator:

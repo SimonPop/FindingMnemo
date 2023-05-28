@@ -1,6 +1,6 @@
-from dragonmapper import transcriptions
 import eng_to_ipa as ipa
 import panphon.distance
+from dragonmapper import transcriptions
 
 
 class PhoneticEmbedder:

@@ -1,9 +1,11 @@
-from jina import Document, DocumentArray, Executor, requests, Flow
 from pathlib import Path
-import pandas as pd 
+
+import pandas as pd
 import torch
+from jina import Document, DocumentArray, Executor, Flow, requests
 
 from src.pairing.model.phonetic_siamese import PhoneticSiamese
+
 
 class Indexer(Executor):
     model: PhoneticSiamese
@@ -16,30 +18,38 @@ class Indexer(Executor):
 
     def load_model(self) -> PhoneticSiamese:
         model = PhoneticSiamese()
-        model.load_state_dict(torch.load(Path(__file__).parent.parent / "model" / "model_dict"))
+        model.load_state_dict(
+            torch.load(Path(__file__).parent.parent / "model" / "model_dict")
+        )
         self.model = model
         model.eval()
         return model
 
     def load_documents(self) -> DocumentArray:
-        dataframe = pd.read_csv(Path(__file__).parent.parent / 'dataset' / 'pairing' / 'english.csv')
-        words = dataframe[['word', 'ipa']].astype(str)
+        dataframe = pd.read_csv(
+            Path(__file__).parent.parent / "dataset" / "pairing" / "english.csv"
+        )
+        words = dataframe[["word", "ipa"]].astype(str)
 
-        local_da = DocumentArray([Document(text=w['word'], ipa=w['ipa']) for _, w in words.iterrows()])
+        local_da = DocumentArray(
+            [Document(text=w["word"], ipa=w["ipa"]) for _, w in words.iterrows()]
+        )
+
         def embed(da: DocumentArray) -> DocumentArray:
-                x = da[:,'tags__ipa']
-                da.embeddings = self.model.encode(x).detach()
-                return da
+            x = da[:, "tags__ipa"]
+            da.embeddings = self.model.encode(x).detach()
+            return da
+
         local_da.apply_batch(embed, batch_size=32)
 
         with DocumentArray(
-            storage='redis',
+            storage="redis",
             config={
-                'n_dim': self.model.embedding_dim,
-                'index_name': 'english_words',
-                'distance': 'COSINE',
-                'host': 'redis',
-                'port': '6379',
+                "n_dim": self.model.embedding_dim,
+                "index_name": "english_words",
+                "distance": "COSINE",
+                "host": "redis",
+                "port": "6379",
             },
         ) as da:
             da += local_da
@@ -50,9 +60,9 @@ class Indexer(Executor):
 
 
 if __name__ == "__main__":
-    f = Flow().add(name='Indexer', uses=Indexer)
+    f = Flow().add(name="Indexer", uses=Indexer)
     with f:
-        f.post(on='/index', inputs=None, on_done=print)
+        f.post(on="/index", inputs=None, on_done=print)
 
 
 # indexer = Indexer()

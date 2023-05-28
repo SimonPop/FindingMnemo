@@ -1,16 +1,16 @@
+import json
 from itertools import chain
 from typing import Callable, List, Optional
 
-import torch
-import json
 import networkx as nx
 import numpy as np
-
+import torch
 from torch_geometric.data import Data, InMemoryDataset, download_url
 from torch_geometric.utils.convert import to_networkx
 
+
 class LabelledWordNet18RR(InMemoryDataset):
-    r"""Modified WordNet18RR dataset from PyG including word names. 
+    r"""Modified WordNet18RR dataset from PyG including word names.
 
     Args:
         root (string): Root directory where the dataset should be saved.
@@ -24,21 +24,23 @@ class LabelledWordNet18RR(InMemoryDataset):
             being saved to disk. (default: :obj:`None`)
     """
 
-    url = ('https://raw.githubusercontent.com/villmow/'
-           'datasets_knowledge_embedding/master/WN18RR/text')
+    url = (
+        "https://raw.githubusercontent.com/villmow/"
+        "datasets_knowledge_embedding/master/WN18RR/text"
+    )
 
     edge2id = {
-        '_also_see': 0,
-        '_derivationally_related_form': 1,
-        '_has_part': 2,
-        '_hypernym': 3,
-        '_instance_hypernym': 4,
-        '_member_meronym': 5,
-        '_member_of_domain_region': 6,
-        '_member_of_domain_usage': 7,
-        '_similar_to': 8,
-        '_synset_domain_topic_of': 9,
-        '_verb_group': 10,
+        "_also_see": 0,
+        "_derivationally_related_form": 1,
+        "_has_part": 2,
+        "_hypernym": 3,
+        "_instance_hypernym": 4,
+        "_member_meronym": 5,
+        "_member_of_domain_region": 6,
+        "_member_of_domain_usage": 7,
+        "_similar_to": 8,
+        "_synset_domain_topic_of": 9,
+        "_verb_group": 10,
     }
 
     def __init__(
@@ -47,7 +49,7 @@ class LabelledWordNet18RR(InMemoryDataset):
         transform: Optional[Callable] = None,
         pre_transform: Optional[Callable] = None,
         n_sample: int = 1000,
-        mode: str = 'train'
+        mode: str = "train",
     ):
         self.n_sample = n_sample
         self.mode = mode
@@ -57,17 +59,17 @@ class LabelledWordNet18RR(InMemoryDataset):
             self.id2node = json.load(f)
         with open(self.processed_paths[0][:-3] + "pairs.json", "r") as f:
             self.pairs = json.load(f)
-        # TODO: Remove nodes that have no embeddings in Glove? 
+        # TODO: Remove nodes that have no embeddings in Glove?
         # TODO: Remove nodes that aren't in any of the sampled nodes and their k hops neighborhood?
         # TODO: Subsample graph to start with?
 
     def __len__(self):
         return self.n_sample
-    
+
     def __getitem__(self, idx):
-        x = self.pairs[self.mode]['x'][idx]
-        y = self.pairs[self.mode]['y'][idx]
-        label = self.pairs[self.mode]['distance'][idx]
+        x = self.pairs[self.mode]["x"][idx]
+        y = self.pairs[self.mode]["y"][idx]
+        label = self.pairs[self.mode]["distance"][idx]
         return {
             "x": x,
             "y": y,
@@ -77,25 +79,35 @@ class LabelledWordNet18RR(InMemoryDataset):
 
     @property
     def raw_file_names(self) -> List[str]:
-        return ['train.txt', 'valid.txt', 'test.txt']
+        return ["train.txt", "valid.txt", "test.txt"]
 
     @property
     def processed_file_names(self) -> str:
-        return 'data.pt'
+        return "data.pt"
 
     def download(self):
         for filename in self.raw_file_names:
-            download_url(f'{self.url}/{filename}', self.raw_dir)
+            download_url(f"{self.url}/{filename}", self.raw_dir)
 
     def get_node_mask(self, mode):
         if mode == "train":
-            return list(range(0, self.data.num_nodes//2))
+            return list(range(0, self.data.num_nodes // 2))
         elif mode == "val":
-            return list(range(self.data.num_nodes//2, self.data.num_nodes//2 + self.data.num_nodes//4))
+            return list(
+                range(
+                    self.data.num_nodes // 2,
+                    self.data.num_nodes // 2 + self.data.num_nodes // 4,
+                )
+            )
         elif mode == "test":
-            return list(range(self.data.num_nodes//2 + self.data.num_nodes//4, self.data.num_nodes))
+            return list(
+                range(
+                    self.data.num_nodes // 2 + self.data.num_nodes // 4,
+                    self.data.num_nodes,
+                )
+            )
         else:
-            raise ValueError('Unknown mode. Please use mode in [train, val, test].')
+            raise ValueError("Unknown mode. Please use mode in [train, val, test].")
         # return [i for i, x in enumerate(mask) if x]
 
     def sample_pairs(self):
@@ -107,14 +119,14 @@ class LabelledWordNet18RR(InMemoryDataset):
         train_indexes = self.get_node_mask("train")
         val_indexes = self.get_node_mask("val")
         test_indexes = self.get_node_mask("test")
-        
-        graph = nx.Graph(to_networkx(self.data)) 
+
+        graph = nx.Graph(to_networkx(self.data))
         components = nx.connected_components(graph)
         node2pool = {}
         for component in components:
-            componentxtrain = component.intersection(train_indexes) 
-            componentxval = component.intersection(val_indexes) 
-            componentxtest = component.intersection(test_indexes) 
+            componentxtrain = component.intersection(train_indexes)
+            componentxval = component.intersection(val_indexes)
+            componentxtest = component.intersection(test_indexes)
             # Link node to a component x mask (only nodes of the same component with the same mask should be taken).
             for node in component:
                 if node in train_indexes:
@@ -127,25 +139,29 @@ class LabelledWordNet18RR(InMemoryDataset):
                     raise KeyError("?")
 
         pairs = {}
-        for mode, indexes in zip(['train', 'val', 'test'], [train_indexes, val_indexes, test_indexes]):            
+        for mode, indexes in zip(
+            ["train", "val", "test"], [train_indexes, val_indexes, test_indexes]
+        ):
             X = np.random.choice(indexes, self.n_sample).tolist()
             Y = []
             for x in X:
-                component = node2pool[x] # Select the same component as X to guarantee there exists a path.
+                component = node2pool[
+                    x
+                ]  # Select the same component as X to guarantee there exists a path.
                 y = int(np.random.choice(component))
                 Y.append(y)
             pairs[mode] = {
                 "x": X,
                 "y": Y,
-                "distance": [self.shortest_path(graph, x, y) for x, y in zip(X, Y)]
+                "distance": [self.shortest_path(graph, x, y) for x, y in zip(X, Y)],
             }
         return pairs
-    
+
     @staticmethod
     def shortest_path(graph, x, y) -> int:
         try:
             return len(nx.shortest_path(graph, x, y))
-        except: 
+        except:
             return -1
 
     def process(self):
@@ -153,7 +169,7 @@ class LabelledWordNet18RR(InMemoryDataset):
 
         srcs, dsts, edge_types = [], [], []
         for path in self.raw_paths:
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 data = f.read().split()
 
                 src = data[::3]
@@ -179,11 +195,11 @@ class LabelledWordNet18RR(InMemoryDataset):
         edge_type = torch.cat(edge_types, dim=0)
 
         train_mask = torch.zeros(src.size(0), dtype=torch.bool)
-        train_mask[:srcs[0].size(0)] = True
+        train_mask[: srcs[0].size(0)] = True
         val_mask = torch.zeros(src.size(0), dtype=torch.bool)
-        val_mask[srcs[0].size(0):srcs[0].size(0) + srcs[1].size(0)] = True
+        val_mask[srcs[0].size(0) : srcs[0].size(0) + srcs[1].size(0)] = True
         test_mask = torch.zeros(src.size(0), dtype=torch.bool)
-        test_mask[srcs[0].size(0) + srcs[1].size(0):] = True
+        test_mask[srcs[0].size(0) + srcs[1].size(0) :] = True
 
         num_nodes = max(int(src.max()), int(dst.max())) + 1
         perm = (num_nodes * src + dst).argsort()
@@ -194,10 +210,15 @@ class LabelledWordNet18RR(InMemoryDataset):
         val_mask = val_mask[perm]
         test_mask = test_mask[perm]
 
-        data = Data(edge_index=edge_index, edge_type=edge_type,
-                    train_mask=train_mask, val_mask=val_mask,
-                    test_mask=test_mask, num_nodes=num_nodes)
-        
+        data = Data(
+            edge_index=edge_index,
+            edge_type=edge_type,
+            train_mask=train_mask,
+            val_mask=val_mask,
+            test_mask=test_mask,
+            num_nodes=num_nodes,
+        )
+
         if self.pre_transform is not None:
             data = self.pre_filter(data)
         self.data = data
@@ -209,4 +230,3 @@ class LabelledWordNet18RR(InMemoryDataset):
         print(pairs)
         with open(self.processed_paths[0][:-3] + "pairs.json", "w") as f:
             json.dump(pairs, f)
-

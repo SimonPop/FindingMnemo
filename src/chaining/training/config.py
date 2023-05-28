@@ -1,7 +1,9 @@
+from enum import Enum
+from pathlib import Path
+
 import yaml
 from pydantic import BaseModel
-from pathlib import Path
-from enum import Enum
+
 
 class TrainingConfig(BaseModel):
     experiment_name: str
@@ -10,10 +12,12 @@ class TrainingConfig(BaseModel):
     seed: int = 0
     log_folder: str
 
+
 def read_config() -> TrainingConfig:
-    config_path = Path(__file__).parent / 'config.yaml'
-    with open(config_path, 'r') as f:
+    config_path = Path(__file__).parent / "config.yaml"
+    with open(config_path, "r") as f:
         yaml_config = yaml.safe_load(f)
     return TrainingConfig(**yaml_config)
+
 
 CONFIG = read_config()

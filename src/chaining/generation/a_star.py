@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from src.generation.embedding_heuristic import EMBEDDING_HEURISTIC
 from typing import List
-import networkx as nx
-from src.dataset.database_handler import DatabaseHandler
 
-class Node():
+import networkx as nx
+
+from src.dataset.database_handler import DatabaseHandler
+from src.generation.embedding_heuristic import EMBEDDING_HEURISTIC
+
+
+class Node:
     word: str
     to_target: float = None
     to_start: int = 0
@@ -22,9 +25,10 @@ class Node():
         self.to_target = EMBEDDING_HEURISTIC.distance(self.word, target_word)
 
     def __eq__(self, __o: Node) -> bool:
-        return __o.word == self.word 
+        return __o.word == self.word
 
-class AStar():
+
+class AStar:
     def __init__(self):
         self.jump_limit = 10
         self.handler = DatabaseHandler("bolt://localhost:7687", "simon", "wiktionary")
@@ -40,10 +44,10 @@ class AStar():
 
         while len(nodes) > 0 and count < self.jump_limit:
             count += 1
-            node = nodes.pop() # TODO: get the minimum f.
-            if node in visited_nodes: # Ignore node.
+            node = nodes.pop()  # TODO: get the minimum f.
+            if node in visited_nodes:  # Ignore node.
                 continue
-            elif node.word == target: # Over.
+            elif node.word == target:  # Over.
                 return node
             else:
                 visited_nodes.append(node)
@@ -65,7 +69,8 @@ class AStar():
     def get_neighbors(self, node: Node) -> List[str]:
         return self.temporary_graph.neighbors(node.word)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     a_start = AStar()
     n = a_start.get_neighbors(Node(word="pride"))
     target = a_start.find_path("dignity", "pride")

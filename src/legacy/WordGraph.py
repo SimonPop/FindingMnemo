@@ -1,12 +1,12 @@
+from typing import List
+
+import eng_to_ipa as ipa
 import markovify
 import networkx as nx
-from typing import List
-import panphon.distance
 import numpy as np
+import panphon.distance
+from dragonmapper import hanzi, transcriptions
 from tqdm import tqdm
-from dragonmapper import hanzi
-from dragonmapper import transcriptions
-import eng_to_ipa as ipa
 
 
 class WordGraph:

@@ -1,13 +1,14 @@
-from torch.utils.data import Dataset
-from dragonmapper import transcriptions
-import eng_to_ipa as ipa
-from typing import List
-import yaml
-from tqdm import tqdm
-import panphon.distance
-import numpy as np
-from random import sample
 import os
+from random import sample
+from typing import List
+
+import eng_to_ipa as ipa
+import numpy as np
+import panphon.distance
+import yaml
+from dragonmapper import transcriptions
+from torch.utils.data import Dataset
+from tqdm import tqdm
 
 
 class SoundDataset(Dataset):

@@ -9,15 +9,15 @@ RUN apt-get update
 RUN apt-get install ffmpeg libsm6 libxext6  -y
 
 COPY ./setup.py /code/setup.py
-COPY ./src/app /code/src/app
-COPY ./src/text_generation /code/src/text_generation
-COPY ./src/pairing/search /code/src/pairing/search
-COPY ./src/pairing/model /code/src/pairing/model
-COPY ./src/pairing/training /code/src/pairing/training
-COPY ./src/pairing/utils /code/src/pairing/utils
-COPY ./src/pairing/dataset/pairing/english.csv /code/src/pairing/dataset/pairing/english.csv
+COPY ./finding_mnemo/app /code/finding_mnemo/app
+COPY ./finding_mnemo/text_generation /code/finding_mnemo/text_generation
+COPY ./finding_mnemo/pairing/search /code/finding_mnemo/pairing/search
+COPY ./finding_mnemo/pairing/model /code/finding_mnemo/pairing/model
+COPY ./finding_mnemo/pairing/training /code/finding_mnemo/pairing/training
+COPY ./finding_mnemo/pairing/utils /code/finding_mnemo/pairing/utils
+COPY ./finding_mnemo/pairing/dataset/pairing/english.csv /code/finding_mnemo/pairing/dataset/pairing/english.csv
 RUN python /code/setup.py install
 
-COPY ./src/app /code/app
+COPY ./finding_mnemo/app /code/app
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]

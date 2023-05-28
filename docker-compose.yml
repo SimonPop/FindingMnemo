@@ -10,7 +10,7 @@ services:
     ports:     
       - "8000:8000"
   streamlit:
-    build: src/streamlit
+    build: finding_mnemo/streamlit
     ports:
       - 8501:8501
     depends_on:

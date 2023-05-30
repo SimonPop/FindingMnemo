@@ -54,7 +54,7 @@ A chain of ideas connecting both concepts could be: `cat` ⇔ `kitten` ⇔ `moth
 Find a [Streamlit demo](https://finding-mnemo.streamlit.app/) where you will be able to play with the different functionalities.
 
 <p align="center">
-    <img src="imgs/streamlit.png" alt= "Streamlit Demo" width="75%">
+    <img src="./imgs/streamlit.png" alt= "Streamlit Demo" width="75%">
 </p>
 
 # Installation

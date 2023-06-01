@@ -12,7 +12,6 @@ setup(
     author="Simon Popelier",
     author_email="simon.popelier@gmail.com",
     description=("Finding mnemonics using different AI tools."),
-    long_description=read("README.md"),
     classifiers=[
         "Programming Language :: Python",
         "Topic :: Software Development :: Libraries :: Python Modules",

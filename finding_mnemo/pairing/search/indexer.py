@@ -2,15 +2,14 @@ from pathlib import Path
 
 import pandas as pd
 import torch
-from jina import Document, DocumentArray, Executor, Flow, requests
+from jina import Document, DocumentArray
 
 from finding_mnemo.pairing.model.phonetic_siamese import PhoneticSiamese
 
 
-class Indexer(Executor):
+class Indexer():
     model: PhoneticSiamese
 
-    @requests(on=["/index"])
     def index(self, **kwargs) -> DocumentArray:
         model = self.load_model()
         da = self.load_documents()
@@ -57,18 +56,3 @@ class Indexer(Executor):
 
     def embed(self, da: DocumentArray):
         da.embed(self.model.encode)
-
-
-if __name__ == "__main__":
-    f = Flow().add(name="Indexer", uses=Indexer)
-    with f:
-        f.post(on="/index", inputs=None, on_done=print)
-
-
-# indexer = Indexer()
-# da = indexer.index()
-
-# with torch.inference_mode():
-#     np_query = indexer.model.encode(["bɔ́təl"]).detach().numpy()[0]
-#     # da.match(np_query, metric='cosine', limit=3)
-#     print(da.find(np_query, limit=5)[:, 'text'])

@@ -2,12 +2,12 @@ from pathlib import Path
 from typing import Dict, Union
 
 import torch
-from jina import Document, DocumentArray, Executor, Flow, requests
+from docarray import Document, DocumentArray
 
 from finding_mnemo.pairing.model.phonetic_siamese import PhoneticSiamese
 
 
-class Engine(Executor):
+class Engine():
     n_limit: int = 5
     model: PhoneticSiamese
     da: DocumentArray
@@ -17,7 +17,6 @@ class Engine(Executor):
         self.model = self.load_model()
         self.da = self.documents()
 
-    @requests(on=["/search", "/generate"])
     def search(self, docs: DocumentArray, **kwargs) -> Union[DocumentArray, Dict, None]:
         x = docs[:, "tags__ipa"]
         docs.embeddings = self.model.encode(x).detach()
@@ -48,11 +47,3 @@ class Engine(Executor):
             },
         )
         return DocumentArray(da, copy=True)
-
-
-if __name__ == "__main__":
-    f = Flow().add(name="Engine", uses=Engine)
-    with f:
-        f.post(
-            on="/generate", inputs=DocumentArray(Document(text="hotel", ipa="bɔ́təl"))
-        )

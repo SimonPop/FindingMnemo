@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 import torch
-from jina import Document, DocumentArray
+from docarray import Document, DocumentArray
 
 from finding_mnemo.pairing.model.phonetic_siamese import PhoneticSiamese
 

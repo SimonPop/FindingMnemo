@@ -22,5 +22,9 @@ setup(
     ],
     license="BSD",
     keywords=["mnemonic", "chinese", "mandarin", "english", "search", "phonetic"],
-    packages=find_packages()
+    packages=find_packages(),
+    package_data={
+      'src': ['pairing/training/config.yaml', 'pairing/model/model_dict', 'pairing/dataset/data/english.csv'],
+    },
+    include_package_data=True
 )

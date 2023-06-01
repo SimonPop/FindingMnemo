@@ -16,3 +16,5 @@ data/
 !notebooks/phonetic_embedding.ipynb
 !notebooks/phonetic_training.ipynb
 !notebooks/explore_a_star.ipynb
+
+!finding_mnemo/pairing/dataset/data/english.csv

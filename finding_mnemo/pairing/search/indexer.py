@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 import torch
+import json
 from docarray import Document, DocumentArray
 
 from finding_mnemo.pairing.model.phonetic_siamese import PhoneticSiamese
@@ -16,7 +17,21 @@ class Indexer():
         return da
 
     def load_model(self) -> PhoneticSiamese:
-        model = PhoneticSiamese()
+        with open(Path(__file__).parent.parent / "model" / "model_config.json", "r") as f:
+            model_config = json.load(f)
+        model = PhoneticSiamese(
+            embedding_dim=model_config["embedding_dim"],
+            dim_feedforward=model_config["dim_feedforward"],
+            nhead=model_config["nhead"],
+            dropout=model_config["dropout"],
+            batch_size=model_config["batch_size"],
+            weight_decay=model_config["weight_decay"],
+            lr=model_config["lr"],
+            margin=model_config["margin"],
+            lambda_triplet=model_config["lambda_triplet"],
+            lambda_pos=model_config["lambda_pos"],
+            lambda_neg=model_config["lambda_neg"],
+        )
         model.load_state_dict(
             torch.load(Path(__file__).parent.parent / "model" / "model_dict")
         )

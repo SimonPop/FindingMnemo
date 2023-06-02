@@ -24,7 +24,7 @@ setup(
     keywords=["mnemonic", "chinese", "mandarin", "english", "search", "phonetic"],
     packages=find_packages(),
     package_data={
-      'finding_mnemo': ['pairing/training/config.yaml', 'pairing/model/model_dict', 'pairing/dataset/data/english.csv'],
+      'finding_mnemo': ['pairing/training/config.yaml', 'pairing/model/model_config.json', 'pairing/model/model_dict', 'pairing/dataset/data/english.csv'],
     },
     include_package_data=True
 )

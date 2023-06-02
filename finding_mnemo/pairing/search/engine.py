@@ -12,10 +12,9 @@ class Engine():
     model: PhoneticSiamese
     da: DocumentArray
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, documents):
         self.model = self.load_model()
-        self.da = self.documents()
+        self.da = documents
 
     def search(self, docs: DocumentArray, **kwargs) -> Union[DocumentArray, Dict, None]:
         x = docs[:, "tags__ipa"]
@@ -31,19 +30,3 @@ class Engine():
         model.eval()
         self.model = model
         return model
-
-    def load_documents(self) -> None:
-        self.da = self.documents()
-
-    def documents(self) -> DocumentArray:
-        da = DocumentArray(
-            storage="redis",
-            config={
-                "n_dim": self.model.embedding_dim,
-                "index_name": "english_words",
-                "distance": "L2",
-                "host": "redis",
-                "port": "6379",
-            },
-        )
-        return DocumentArray(da, copy=True)

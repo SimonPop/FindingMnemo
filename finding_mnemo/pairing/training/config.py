@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 class LossType(Enum):
     Triplet = "triplet"
+    GenerativeTriplet = "generative_triplet"
     Pair = "pair"
     Mixed = "mixed"
 
@@ -24,6 +25,8 @@ class TrainingConfig(BaseModel):
     log_folder: str
     best_pairs_dataset: str = "best_pairs.csv"
     worst_pairs_dataset: str = "worst_pairs.csv"
+    english_dataset: str = "english.csv"
+    mandarin_dataset: str = "chinese.csv"
     loss_type: LossType = "pair"
     model_type: ModelType = "phonetic_siamese"
 

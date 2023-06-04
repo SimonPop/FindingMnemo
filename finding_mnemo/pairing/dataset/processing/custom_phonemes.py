@@ -151,3 +151,11 @@ class CustomPhonemes:
         return "".join(
             [chr(65 + custom_dict[x]) if x in custom_dict else x for x in ipa]
         )
+    
+    def get_cluster(self, ipa_char: str, level: int = 10) -> list:
+        """Returns all ipa characters in the same cluster as given character."""
+        custom_dict = self.level_dict[level]
+        if not ipa_char in custom_dict:
+            return IPA_CHARS
+        cluster_nb = custom_dict[ipa_char]
+        return [char for char, cluster in custom_dict.items() if cluster==cluster_nb]

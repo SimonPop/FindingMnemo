@@ -4,27 +4,32 @@ from finding_mnemo.pairing.dataset.processing.custom_phonemes import (
     IPA_CHARS,
 )
 import numpy as np
-
+import panphon.distance
 
 class PairGenerator:
     margin: float
 
     def __init__(self):
         self.cp = CustomPhonemes()
+        self.dst = panphon.distance.Distance()
         self.ipa_features = {
             ipa: feature
             for ipa, feature in zip(IPA_CHARS, self.cp._get_ipa_features())
         }
         self.percentage_change_positive = 0.3
-        self.percentage_change_neagtive = 0.5
+        self.percentage_change_negative = 0.75
 
     def generate_pair(self, word: str) -> dict:
         # Random select a number of edits.
+        percentage_change_negative = np.random.random() * 0.5 + self.percentage_change_negative
         edit_number_positive = round(len(word)*self.percentage_change_positive)
-        edit_number_negative = round(len(word)*self.percentage_change_neagtive)
+        edit_number_negative = round(len(word)*percentage_change_negative)
 
         positive_word, positive_distance = self.generate_positive(word, edit_number_positive)
         negative_word, negative_distance = self.generate(word, edit_number_negative)
+
+        positive_distance = self.dst.fast_levenshtein_distance_div_maxlen(word, positive_word)
+        negative_distance = self.dst.fast_levenshtein_distance_div_maxlen(word, negative_word)
 
         if positive_distance > negative_distance:
             positive_word, positive_distance, negative_word, negative_distance = (

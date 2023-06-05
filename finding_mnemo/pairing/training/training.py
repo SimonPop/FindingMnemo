@@ -7,6 +7,7 @@ from pytorch_lightning.loggers import MLFlowLogger
 from pytorch_lightning.utilities.seed import seed_everything
 from torch.utils.data import DataLoader, Dataset
 
+from finding_mnemo.pairing.dataset.generative_phonetic_triplet_dataset import GenerativePhoneticTripletDataset
 from finding_mnemo.pairing.dataset.phonetic_pair_dataset import PhoneticPairDataset
 from finding_mnemo.pairing.dataset.phonetic_triplet_dataset import PhoneticTripletDataset
 from finding_mnemo.pairing.model.phonetic_siamese import PhoneticSiamese
@@ -17,16 +18,22 @@ def get_dataset() -> Dataset:
     """Returns a Dataset object given loss type."""
     if CONFIG.loss_type == LossType.Pair:
         dataset = PhoneticPairDataset(
-            best_pairs_path=CONFIG.best_pairs_dataset,
-            worst_pairs_path=CONFIG.worst_pairs_dataset,
+            best_pairs_path=CONFIG.best_pairs_dataset, worst_pairs_path=CONFIG.worst_pairs_dataset
         )
     elif CONFIG.loss_type == LossType.Triplet:
         dataset = PhoneticTripletDataset(
-            best_pairs_path=CONFIG.best_pairs_dataset,
-            worst_pairs_path=CONFIG.worst_pairs_dataset,
+            best_pairs_path=CONFIG.best_pairs_dataset, worst_pairs_path=CONFIG.worst_pairs_dataset
+        )
+    elif CONFIG.loss_type == LossType.Mixed:
+        dataset = PhoneticTripletDataset(
+            best_pairs_path=CONFIG.best_pairs_dataset, worst_pairs_path=CONFIG.worst_pairs_dataset
+        )
+    elif CONFIG.loss_type == LossType.GenerativeTriplet:
+        dataset = GenerativePhoneticTripletDataset(
+            english_data_path=CONFIG.english_dataset, mandarin_data_path=CONFIG.mandarin_dataset, size=10000
         )
     else:
-        raise ValueError(f"Unknown loss type given: {CONFIG.loss_type}")
+        raise ValueError(f'Unknown loss type given: {CONFIG.loss_type}')
     return dataset
 
 

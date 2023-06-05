@@ -13,6 +13,8 @@ class GenerativePhoneticTripletDataset(Dataset):
         dataset = pd.concat((english_data, mandarin_data))
         self.dataset = dataset[dataset["valid_ipa"]==True]
         self.dataset = self.dataset[self.dataset["ipa"].str.len() > 2]
+        # Shuffling:
+        self.dataset = self.dataset.sample(frac=1)
 
         self.longest_word = self.dataset["ipa"].str.len().max()
 

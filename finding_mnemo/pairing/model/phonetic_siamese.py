@@ -128,6 +128,8 @@ class PhoneticSiamese(pl.LightningModule):
     def _step(self, batch):
         if self.loss_type == LossType.Triplet:
             return self._step_triplet(batch)
+        elif self.loss_type == LossType.GenerativeTriplet:
+            return self._step_triplet(batch)
         elif self.loss_type == LossType.Pair:
             return self._step_mse(batch)
         elif self.loss_type == LossType.Mixed:

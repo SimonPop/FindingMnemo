@@ -2,8 +2,10 @@ experiment_name: "base_line_model"
 max_epochs: 5
 n_trials: 10
 seed: 0
-loss_type: "triplet"
+loss_type: "generative_triplet"
 best_pairs_dataset: "file:C:\\Users\\simon\\Projets\\FindingMnemo\\finding_mnemo\\pairing\\dataset\\data\\best_pairs.csv"
 worst_pairs_dataset: "file:C:\\Users\\simon\\Projets\\FindingMnemo\\finding_mnemo\\pairing\\dataset\\data\\worst_pairs.csv"
+mandarin_dataset: "file:C:\\Users\\simon\\Projets\\FindingMnemo\\finding_mnemo\\pairing\\dataset\\data\\chinese.csv"
+english_dataset: "file:C:\\Users\\simon\\Projets\\FindingMnemo\\finding_mnemo\\pairing\\dataset\\data\\english.csv"
 log_folder: "file:C:\\Users\\simon\\Projets\\FindingMnemo\\mlruns\\"
 model_type: "phonetic_siamese"

@@ -1,24 +1,58 @@
 from typing import List
-
+import torch
+import torch.nn.functional as F
 from docarray import DocumentArray
 from keytotext import pipeline
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import LogitsProcessor, LogitsProcessorList
 
+class MyCustomLogitsProcessor(LogitsProcessor):
+    def __init__(self, temperature=1):
+        self.T = temperature
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
+        soft_scores = F.softmax(scores/self.T, dim=1)
+        return soft_scores
 
 class TextGenerator():
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.config = {
-            "max_length": 1024,
-            "num_beams": 20,
-            "length_penalty": 0.01,
-            "no_repeat_ngram_size": 3,
-            "early_stopping": True,
-        }
-        self.model = pipeline("k2t-base")
+    def __init__(self, model_type: str):
+        
+        if model_type == "t5":
+            self.config = {
+                "num_beams": 10,
+                "num_return_sequences": 2,
+                "no_repeat_ngram_size": 1,
+                "remove_invalid_values": True,
+                "max_new_tokens": 40,
+                "temperature": 0.95
+            }
+            self.model = AutoModelForSeq2SeqLM.from_pretrained("t5-base")
+            self.tokenizer = AutoTokenizer.from_pretrained("t5-base")
 
-    def generate(self, docs: List[str], **kwargs):
-        # for query in docs:
-        #     mnemo = [self.model([query.text, keyword], **self.config) for keyword in query.matches[:,'text']]
-        #     query.tags['mnemo'] = mnemo
-        # return docs
-        return self.model(docs, **self.config)
+        elif model_type == "k2t":
+            self.config = {
+                "max_length": 1024,
+                "num_beams": 20,
+                "length_penalty": 0.01,
+                "no_repeat_ngram_size": 3,
+                "early_stopping": True,
+            }
+            self.model = pipeline("k2t-base")
+
+    def generate_from_constraint(self, keywords: List[str]) -> List[str]:
+        encoder_input_str = "<|startoftext|>" # TODO: Improve
+
+        input_ids = self.tokenizer(encoder_input_str, return_tensors="pt").input_ids
+        force_words_ids = self.tokenizer(keywords, add_special_tokens=False).input_ids
+
+        outputs = self.model.generate(
+            input_ids,
+            force_words_ids=force_words_ids,
+            logits_processor=LogitsProcessorList([MyCustomLogitsProcessor(self.config['temperature'])]),
+            **self.config
+        )
+
+        return [self.tokenizer.decode(output, skip_special_tokens=True) for output in outputs]
+
+    def generate_from_keywords(self, keywords: List[str]) -> List[str]:
+        return self.model(keywords, **self.config)

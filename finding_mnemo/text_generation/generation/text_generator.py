@@ -1,21 +1,22 @@
 from typing import List
 import torch
 import torch.nn.functional as F
-from docarray import DocumentArray
 from keytotext import pipeline
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from transformers import LogitsProcessor, LogitsProcessorList
 
-class MyCustomLogitsProcessor(LogitsProcessor):
+class SampledTemperatureProcessor(LogitsProcessor):
     def __init__(self, temperature=1):
         self.T = temperature
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
         soft_scores = F.softmax(scores/self.T, dim=1)
-        return soft_scores
+        return soft_scores * torch.rand(scores.shape[1])
 
 class TextGenerator():
     def __init__(self, model_type: str):
+
+        self.model_type = model_type
         
         if model_type == "t5":
             self.config = {
@@ -39,16 +40,20 @@ class TextGenerator():
             }
             self.model = pipeline("k2t-base")
 
-    def generate_from_constraint(self, keywords: List[str]) -> List[str]:
-        encoder_input_str = "<|startoftext|>" # TODO: Improve
+    def generate(self, **kwargs) -> List[str]:
+        if self.model_type == "t5":
+            return self.generate_from_constraint(**kwargs)
+        elif self.model_type == "k2t":
+            return self.generate_from_keywords(**kwargs)
 
-        input_ids = self.tokenizer(encoder_input_str, return_tensors="pt").input_ids
+    def generate_from_constraint(self, keywords: List[str], prompt: str) -> List[str]:
+        input_ids = self.tokenizer(prompt, return_tensors="pt").input_ids
         force_words_ids = self.tokenizer(keywords, add_special_tokens=False).input_ids
 
         outputs = self.model.generate(
             input_ids,
             force_words_ids=force_words_ids,
-            logits_processor=LogitsProcessorList([MyCustomLogitsProcessor(self.config['temperature'])]),
+            logits_processor=LogitsProcessorList([SampledTemperatureProcessor(self.config['temperature'])]),
             **self.config
         )
 

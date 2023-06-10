@@ -1,7 +1,6 @@
 from typing import List
 import torch
 import torch.nn.functional as F
-from keytotext import pipeline
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from transformers import LogitsProcessor, LogitsProcessorList
 
@@ -14,7 +13,7 @@ class SampledTemperatureProcessor(LogitsProcessor):
         return soft_scores * torch.rand(scores.shape[1])
 
 class TextGenerator():
-    def __init__(self, model_type: str):
+    def __init__(self, model_type: str = "t5"):
 
         self.model_type = model_type
         
@@ -31,6 +30,7 @@ class TextGenerator():
             self.tokenizer = AutoTokenizer.from_pretrained("t5-base")
 
         elif model_type == "k2t":
+            from keytotext import pipeline
             self.config = {
                 "max_length": 1024,
                 "num_beams": 20,

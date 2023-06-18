@@ -4,62 +4,7 @@ from pathlib import Path
 import numpy as np
 import panphon
 from sklearn.cluster import KMeans
-
-IPA_CHARS = [
-    "s",
-    "l",
-    "ɤ",
-    "d",
-    "t",
-    "ʃ",
-    "ŋ",
-    "z",
-    "ʐ",
-    "i",
-    "n",
-    "ɛ",
-    "m",
-    "r",
-    "k",
-    "ɻ",
-    "θ",
-    "ʈ",
-    "ɨ",
-    "ʊ",
-    "e",
-    "ɑ",
-    "v",
-    "a",
-    "ɡ",
-    "h",
-    "ɥ",
-    "p",
-    "œ",
-    "ɔ",
-    "ʃ",
-    "t",
-    "æ",
-    "d",
-    "ʒ",
-    "ɯ",
-    "ɪ",
-    "w",
-    "o",
-    "u",
-    "ə",
-    "j",
-    "y",
-    "b",
-    "ɕ",
-    "ɹ",
-    "x",
-    "ʒ",
-    "ð",
-    "ʂ",
-    "f",
-]
-
-NON_IPA_CHARS = ["ʰ", "P", "I", "ʧ", "A"]
+from finding_mnemo.pairing.utils.ipa import IPA_CHARS, NON_IPA_CHARS
 
 
 class CustomPhonemes:
@@ -151,11 +96,11 @@ class CustomPhonemes:
         return "".join(
             [chr(65 + custom_dict[x]) if x in custom_dict else x for x in ipa]
         )
-    
+
     def get_cluster(self, ipa_char: str, level: int = 10) -> list:
         """Returns all ipa characters in the same cluster as given character."""
         custom_dict = self.level_dict[level]
         if not ipa_char in custom_dict:
             return IPA_CHARS
         cluster_nb = custom_dict[ipa_char]
-        return [char for char, cluster in custom_dict.items() if cluster==cluster_nb]
+        return [char for char, cluster in custom_dict.items() if cluster == cluster_nb]

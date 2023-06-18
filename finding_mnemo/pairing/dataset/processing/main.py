@@ -2,7 +2,9 @@ from pathlib import Path
 
 import click
 
-from finding_mnemo.pairing.dataset.processing.alphabet_converter import AlphabetConverter
+from finding_mnemo.pairing.dataset.processing.alphabet_converter import (
+    AlphabetConverter,
+)
 from finding_mnemo.pairing.dataset.processing.pair_maker import PairMaker
 
 

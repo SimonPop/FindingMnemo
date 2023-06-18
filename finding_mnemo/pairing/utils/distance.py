@@ -1,6 +1,6 @@
 from tslearn.metrics import dtw_path_from_metric
 from finding_mnemo.pairing.utils.ipa import IPA_FEATURE_DICT
-import panphon
+import panphon.distance
 
 dst = panphon.distance.Distance()
 

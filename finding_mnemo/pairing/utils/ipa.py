@@ -1,5 +1,69 @@
 from dragonmapper import hanzi
+import panphon
+from dragonmapper import transcriptions
 
+IPA_CHARS = [
+    "s",
+    "l",
+    "ɤ",
+    "d",
+    "t",
+    "ʃ",
+    "ŋ",
+    "z",
+    "ʐ",
+    "i",
+    "n",
+    "ɛ",
+    "m",
+    "r",
+    "k",
+    "ɻ",
+    "θ",
+    "ʈ",
+    "ɨ",
+    "ʊ",
+    "e",
+    "ɑ",
+    "v",
+    "a",
+    "ɡ",
+    "h",
+    "ɥ",
+    "p",
+    "œ",
+    "ɔ",
+    "ʃ",
+    "t",
+    "æ",
+    "d",
+    "ʒ",
+    "ɯ",
+    "ɪ",
+    "w",
+    "o",
+    "u",
+    "ə",
+    "j",
+    "y",
+    "b",
+    "ɕ",
+    "ɹ",
+    "x",
+    "ʒ",
+    "ð",
+    "ʂ",
+    "f",
+]
+
+NON_IPA_CHARS = ["ʰ", "P", "I", "ʧ", "A"]
+
+ft = panphon.FeatureTable()
+
+IPA_FEATURE_DICT = {
+            ipa: ft.word_to_vector_list(ipa, numeric=True)[0]
+            for ipa in IPA_CHARS
+    }
 
 def filter_chinese_ipa(ipa: str) -> str:
     """Keeps only valid IPA character in a string of intended chinese IPA.

@@ -66,25 +66,26 @@ class PhoneticSiamese(pl.LightningModule):
         self.save_hyperparameters()
 
     def forward(self, a: List[str], b: List[str]):
-        a = self.encode(a)
-        b = self.encode(b)
-        return self.cos(a, b)
+        a_encoding = self.encode(a)
+        b_encoding = self.encode(b)
+        return (a_encoding - b_encoding).pow(2).sum(-1).sqrt()
+        # return self.cos(a, b)
 
-    def encode(self, x: List[str]) -> List[torch.tensor]:
-        x = [
+    def encode(self, x: List[str]) -> torch.Tensor:
+        x_tensor = [
             torch.tensor([self.vocabulary[l] for l in w if l in self.vocabulary])
             for w in x
         ]
-        x = [self.pad(t) for t in x]
-        x = torch.stack(x).long()
+        x_tensor = [self.pad(t) for t in x_tensor]
+        x_tensor = torch.stack(x_tensor).long()
         if torch.cuda.is_available():
-            x = x.cuda(0)
-        x = self.embedding(x)
-        x = self.p_enc_1d_model_sum(x)
+            x_tensor = x_tensor.cuda(0)
+        x_tensor = self.embedding(x_tensor)
+        x_tensor = self.p_enc_1d_model_sum(x_tensor)
         if self.nhead > 0:
-            x = self.encoder(x)
-        x = torch.sum(x, dim=1)
-        return x
+            x_tensor = self.encoder(x_tensor)
+        x_tensor = torch.sum(x_tensor, dim=1)
+        return x_tensor
 
     def training_step(self, batch, batch_idx):
         loss = self._step(batch)
@@ -130,6 +131,8 @@ class PhoneticSiamese(pl.LightningModule):
             return self._step_triplet(batch)
         elif self.loss_type == LossType.GenerativeTriplet:
             return self._step_triplet(batch)
+        elif self.loss_type == LossType.GenerativeContrastive:
+            return self._step_mse(batch)
         elif self.loss_type == LossType.Pair:
             return self._step_mse(batch)
         elif self.loss_type == LossType.Mixed:
@@ -142,12 +145,12 @@ class PhoneticSiamese(pl.LightningModule):
             )
 
     def _step_mse(self, batch):
-        chinese_match = batch["chinese_phonetic"]
-        english_match = batch["english_phonetic"]
+        chinese_match = batch["phonetic_a"]
+        english_match = batch["phonetic_b"]
 
         y_hat = self.forward(chinese_match, english_match)
-        similarity = 1 - batch["distance"].float()
-        loss = nn.functional.mse_loss(y_hat, similarity)
+        # similarity = 1 - batch["distance"].float()
+        loss = nn.functional.mse_loss(y_hat, batch["distance"].float())
         return loss
 
     def _step_triplet(self, batch):

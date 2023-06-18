@@ -8,6 +8,7 @@ from pydantic import BaseModel
 class LossType(Enum):
     Triplet = "triplet"
     GenerativeTriplet = "generative_triplet"
+    GenerativeContrastive = "generative_contrastive"
     Pair = "pair"
     Mixed = "mixed"
 

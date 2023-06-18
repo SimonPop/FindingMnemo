@@ -2,7 +2,7 @@ experiment_name: "base_line_model"
 max_epochs: 5
 n_trials: 10
 seed: 0
-loss_type: "generative_triplet"
+loss_type: "generative_contrastive"
 best_pairs_dataset: "file:C:\\Users\\simon\\Projets\\FindingMnemo\\finding_mnemo\\pairing\\dataset\\data\\best_pairs.csv"
 worst_pairs_dataset: "file:C:\\Users\\simon\\Projets\\FindingMnemo\\finding_mnemo\\pairing\\dataset\\data\\worst_pairs.csv"
 mandarin_dataset: "file:C:\\Users\\simon\\Projets\\FindingMnemo\\finding_mnemo\\pairing\\dataset\\data\\chinese.csv"

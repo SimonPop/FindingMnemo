@@ -4,7 +4,7 @@ from finding_mnemo.pairing.dataset.generation.pair_generator import PairGenerato
 
 
 class GenerativePhoneticContrastiveDataset(Dataset):
-    def __init__(self, english_data_path: str, mandarin_data_path: str, size: str):
+    def __init__(self, english_data_path: str, mandarin_data_path: str, size: int, distance: str):
         self.size = size
 
         columns = ["ipa", "valid_ipa"]
@@ -19,7 +19,7 @@ class GenerativePhoneticContrastiveDataset(Dataset):
 
         self.longest_word = self.dataset["ipa"].str.len().max()
 
-        self.pair_generator = PairGenerator()
+        self.pair_generator = PairGenerator(distance=distance)
 
     def __getitem__(self, index):
 

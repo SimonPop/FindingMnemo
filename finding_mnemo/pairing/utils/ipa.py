@@ -96,3 +96,25 @@ def convert_mandarin_to_ipa(h: str) -> str:
         return filter_chinese_ipa(hanzi.to_ipa(h))
     except:
         return "*"
+    
+def mandarin_ipa_to_en(mandarin_str: str) -> str:
+    repalcements = [("ʐ", "ʒ"),
+    ("ɥ", "jʊa"),
+    ('œ', 'ə'),
+    ("ɻ", "ɪ"),
+    ("x", "h"),
+    ('ɨ', 'u'),
+    ('ʂ', 'ʃ'),
+    ('ʈ', 'd'),
+    ('ɤ', 'ə'),
+    ('w', 'w'),
+    ('ɑ', 'a'),
+    ('u', 'ə'),
+    ('y', 'u'),
+    ('ɯ', 'ʊ'),
+    ('ɕ', 'ʃ')]
+
+    for replacement in repalcements:
+        mandarin_str = mandarin_str.replace(*replacement)
+
+    return mandarin_str

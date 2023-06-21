@@ -1,1 +1,1 @@
-{"dropout": 0.2, "lr": 0.001, "weight_decay": 0.001, "dim_feedforward": 16, "batch_size": 16, "nhead": 0, "embedding_dim": 16, "margin": 0.2, "model": "phonetic_siamese", "lambda_triplet": 0.5, "lambda_pos": 0.5, "lambda_neg": 0}
+{"dropout": 0.2, "lr": 0.001, "weight_decay": 0, "dim_feedforward": 16, "batch_size": 16, "nhead": 2, "embedding_dim": 32, "margin": 0.2, "model": "phonetic_siamese", "lambda_triplet": 0.5, "lambda_pos": 0.5, "lambda_neg": 0}

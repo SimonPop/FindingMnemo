@@ -6,6 +6,7 @@ import torch
 from docarray import Document, DocumentArray
 
 from finding_mnemo.pairing.model.phonetic_siamese import PhoneticSiamese
+from finding_mnemo.pairing.utils.ipa import mandarin_ipa_to_en
 
 
 class Engine():
@@ -19,6 +20,7 @@ class Engine():
 
     def search(self, docs: DocumentArray, **kwargs) -> Union[DocumentArray, Dict, None]:
         x = docs[:, "tags__ipa"]
+        x = [mandarin_ipa_to_en(w) for w in x]
         docs.embeddings = self.model.encode(x).detach()
         docs.match(self.da, metric="euclidean", limit=self.n_limit)
         return docs

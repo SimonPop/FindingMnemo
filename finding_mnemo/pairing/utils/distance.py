@@ -1,10 +1,10 @@
-from tslearn.metrics import dtw_path_from_metric
 from finding_mnemo.pairing.utils.ipa import IPA_FEATURE_DICT
 import panphon.distance
 
 dst = panphon.distance.Distance()
 
 def panphon_dtw(s1: str, s2: str) -> float:
+    from tslearn.metrics import dtw_path_from_metric
     """Computes a distance between two IPA strings based on DTW and panphon features."""
     s1_b = [list(IPA_FEATURE_DICT[c]) if c in IPA_FEATURE_DICT else [0]*24 for c in s1]
     s2_b = [list(IPA_FEATURE_DICT[c]) if c in IPA_FEATURE_DICT else [0]*24 for c in s2]

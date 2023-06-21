@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, Union, List
 
 import json
 import torch
@@ -7,6 +7,7 @@ from docarray import Document, DocumentArray
 
 from finding_mnemo.pairing.model.phonetic_siamese import PhoneticSiamese
 from finding_mnemo.pairing.utils.ipa import mandarin_ipa_to_en
+from finding_mnemo.pairing.utils.distance import levenshtein_distance
 
 
 class Engine():
@@ -24,6 +25,12 @@ class Engine():
         docs.embeddings = self.model.encode(x).detach()
         docs.match(self.da, metric="euclidean", limit=self.n_limit)
         return docs
+    
+    def get_distance(self, docs: DocumentArray, target_ipa: str) -> List[float]:
+        docs_dict = docs.to_dict()
+        ipas = [x['tags']['ipa'] for x in docs_dict[0]["matches"]]
+        distances = [levenshtein_distance(target_ipa, ipa) for ipa in ipas]
+        return distances
 
     def load_model(self) -> PhoneticSiamese:
         with open(Path(__file__).parent.parent / "model" / "model_config.json", "r") as f:

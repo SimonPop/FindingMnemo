@@ -15,7 +15,8 @@ class Engine():
     model: PhoneticSiamese
     da: DocumentArray
 
-    def __init__(self, documents):
+    def __init__(self, documents, n_limit: int = 5):
+        self.n_limit = n_limit
         self.model = self.load_model()
         self.da = documents
 

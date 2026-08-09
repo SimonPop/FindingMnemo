@@ -1,10 +1,9 @@
 import mlflow
 import optuna
 import torch
-from pytorch_lightning import Trainer
+from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import MLFlowLogger
-from pytorch_lightning.utilities.seed import seed_everything
 from torch.utils.data import DataLoader, Dataset
 
 from finding_mnemo.pairing.dataset.generative_phonetic_triplet_dataset import GenerativePhoneticTripletDataset
